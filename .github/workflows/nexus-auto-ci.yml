@@ -1,32 +1,38 @@
-name: CI Pipeline
+name: CI Production Pipeline
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 jobs:
-  security:
+  security_and_lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Dependency Security Scan
+      - name: Lint and Security Scan
         run: |
-          pip install safety
-          if [ -f requirements.txt ]; then safety check -r requirements.txt; fi
-      - name: Static Analysis
-        run: |
-          pip install flake8
-          if [ -f main.py ]; then flake8 .; fi
-  build:
-    needs: security
+          if [ -f requirements.txt ]; then 
+            pip install -r requirements.txt; 
+          fi
+          pip install flake8 safety
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          if [ -f requirements.txt ]; then 
+            safety check; 
+          fi
+  build_and_test:
+    needs: security_and_lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Build Docker Image
         run: |
-          docker build -t fastapi-app:${{ github.sha }} .
-          docker tag fastapi-app:${{ github.sha }} fastapi-app:latest
+          docker build -t fastapi-prod-app:${{ github.sha }} .
+      - name: Verify Container
+        run: |
+          docker images | grep fastapi-prod-app
