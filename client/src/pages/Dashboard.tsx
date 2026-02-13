@@ -65,7 +65,7 @@ const Dashboard = () => {
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                Dashboard
+                Dashboard Overview
             </h1>
 
             {/* Summary Cards */}
