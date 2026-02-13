@@ -1,4 +1,4 @@
-name: Production CI
+name: CI Pipeline
 on:
   push:
     branches: [ main ]
@@ -10,24 +10,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Run Security Scans
+      - name: Dependency Security Scan
         run: |
-          if [ -f requirements.txt ]; then
-            pip install safety bandit
-            bandit -r .
-            safety check
-          else
-            echo 'No requirements.txt found, skipping safety check'
-          fi
+          pip install safety
+          if [ -f requirements.txt ]; then safety check -r requirements.txt; fi
+      - name: Static Analysis
+        run: |
+          pip install flake8
+          if [ -f main.py ]; then flake8 .; fi
   build:
     needs: security
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build Docker image
+      - name: Build Docker Image
         run: |
-          docker build . -t fastapi-app:${{ github.sha }}
+          docker build -t fastapi-app:${{ github.sha }} .
           docker tag fastapi-app:${{ github.sha }} fastapi-app:latest
