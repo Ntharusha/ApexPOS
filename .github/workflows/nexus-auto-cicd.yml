@@ -1,0 +1,36 @@
+name: CI/CD
+on:
+  push:
+    branches: [ "main" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Configure Docker
+        run: gcloud auth configure-docker gcr.io
+      - name: Build and Push
+        run: |
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/fastapi-app:${{ github.sha }} .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/fastapi-app:${{ github.sha }}
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: fastapi-service
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/fastapi-app:${{ github.sha }}
+          region: us-central1
+          flags: '--allow-unauthenticated'
