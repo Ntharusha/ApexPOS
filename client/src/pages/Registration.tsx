@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Users, Briefcase, Truck, Plus, Edit2, Trash2, X, Mail, Phone, MapPin } from 'lucide-react';
+import { User, Users, Briefcase, Truck, Plus, Trash2, X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useStore } from '../store/useStore';
 
 interface Staff {
     _id?: string;
@@ -41,6 +42,7 @@ interface Supplier {
 const Registration = () => {
     const [activeTab, setActiveTab] = useState<'customers' | 'staff' | 'suppliers'>('customers');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const theme = useStore(state => state.theme);
 
     const [staff, setStaff] = useState<Staff[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -126,85 +128,97 @@ const Registration = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-text">
                 Registration Hub
             </h1>
 
-            <div className="flex gap-4 border-b border-white/10">
-                <button
-                    onClick={() => setActiveTab('customers')}
-                    className={`flex items-center gap-2 px-6 py-3 border-b-2 transition-colors ${activeTab === 'customers' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-white'}`}
-                >
-                    <Users size={20} /> Customers
-                </button>
-                <button
-                    onClick={() => setActiveTab('staff')}
-                    className={`flex items-center gap-2 px-6 py-3 border-b-2 transition-colors ${activeTab === 'staff' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-white'}`}
-                >
-                    <Briefcase size={20} /> Staff
-                </button>
-                <button
-                    onClick={() => setActiveTab('suppliers')}
-                    className={`flex items-center gap-2 px-6 py-3 border-b-2 transition-colors ${activeTab === 'suppliers' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-white'}`}
-                >
-                    <Truck size={20} /> Suppliers
-                </button>
+            <div className={`p-1 ${theme === 'light' ? 'bg-slate-100' : 'bg-surface'} rounded-2xl inline-flex gap-1`}>
+                {[
+                    { id: 'customers', icon: Users, label: 'Customers' },
+                    { id: 'staff', icon: Briefcase, label: 'Staff members' },
+                    { id: 'suppliers', icon: Truck, label: 'Suppliers' }
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold transition-all text-sm ${activeTab === tab.id
+                            ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                            : 'text-text-muted hover:text-text hover:bg-text/5'
+                            }`}
+                    >
+                        <tab.icon size={18} /> {tab.label}
+                    </button>
+                ))}
             </div>
 
-            <div className="glass-card p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold capitalize">{activeTab} Directory</h2>
+            <div className="glass-card flex flex-col overflow-hidden">
+                <div className="p-6 border-b border-text/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-text/5">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                            {activeTab === 'customers' ? <Users size={22} /> : activeTab === 'staff' ? <Briefcase size={22} /> : <Truck size={22} />}
+                        </div>
+                        <h2 className="text-xl font-black text-text tracking-tight uppercase">{activeTab} Directory</h2>
+                    </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="bg-primary text-background px-4 py-2 rounded-lg font-bold hover:bg-primary/90 flex items-center gap-2"
+                        className="w-full md:w-auto bg-primary text-white px-8 py-3 rounded-xl font-black hover:opacity-90 flex items-center justify-center gap-2 shadow-xl shadow-primary/20 transition-all active:scale-95"
                     >
-                        <Plus size={20} /> Add New
+                        <Plus size={20} /> New Entry
                     </button>
                 </div>
 
-                {getCurrentData().length === 0 ? (
-                    <div className="bg-surface/30 rounded-lg p-10 flex flex-col items-center justify-center text-gray-500 border border-white/5 border-dashed">
-                        <User size={48} className="mb-4 opacity-20" />
-                        <p>No {activeTab} records found.</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
+                <div className="overflow-x-auto custom-scrollbar">
+                    {getCurrentData().length === 0 ? (
+                        <div className="p-20 flex flex-col items-center justify-center text-text-muted/40 italic gap-4">
+                            <User size={64} strokeWidth={1} className="opacity-20" />
+                            <p className="font-bold">No {activeTab} records found.</p>
+                        </div>
+                    ) : (
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-white/10">
-                                    <th className="text-left p-3 text-gray-400 font-medium">Name</th>
-                                    <th className="text-left p-3 text-gray-400 font-medium">Contact</th>
-                                    {activeTab === 'staff' && <th className="text-left p-3 text-gray-400 font-medium">Role</th>}
-                                    {activeTab === 'staff' && <th className="text-left p-3 text-gray-400 font-medium">Salary</th>}
-                                    {activeTab === 'customers' && <th className="text-left p-3 text-gray-400 font-medium">Purchases</th>}
-                                    {activeTab === 'suppliers' && <th className="text-left p-3 text-gray-400 font-medium">Company</th>}
-                                    <th className="text-left p-3 text-gray-400 font-medium">Status</th>
-                                    <th className="text-left p-3 text-gray-400 font-medium">Actions</th>
+                                <tr className={`text-text-muted text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'light' ? 'bg-slate-50' : ''}`}>
+                                    <th className="p-5">Information</th>
+                                    <th className="p-5">Contact Details</th>
+                                    {activeTab === 'staff' && <th className="p-5">Role & Position</th>}
+                                    {activeTab === 'staff' && <th className="p-5">Monthly Salary</th>}
+                                    {activeTab === 'customers' && <th className="p-5">Lifetime Value</th>}
+                                    {activeTab === 'suppliers' && <th className="p-5">Company / Entity</th>}
+                                    <th className="p-5">Status</th>
+                                    <th className="p-5 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-text/5">
                                 {getCurrentData().map((item: any) => (
-                                    <tr key={item._id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                        <td className="p-3">
+                                    <tr key={item._id} className="hover:bg-text/5 transition-colors group">
+                                        <td className="p-5">
                                             <div>
-                                                <p className="font-medium text-white">{item.name}</p>
-                                                <p className="text-xs text-gray-500">{item.email}</p>
+                                                <p className="font-black text-text leading-tight group-hover:text-primary transition-colors">{item.name}</p>
+                                                <p className="text-[11px] text-text-muted mt-0.5 font-bold uppercase tracking-wider">{item.nic || 'No NIC'}</p>
                                             </div>
                                         </td>
-                                        <td className="p-3 text-gray-300">{item.phone}</td>
-                                        {activeTab === 'staff' && <td className="p-3"><span className="px-2 py-1 rounded bg-primary/20 text-primary text-xs">{item.role}</span></td>}
-                                        {activeTab === 'staff' && <td className="p-3 text-gray-300">LKR {item.salary?.toLocaleString()}</td>}
-                                        {activeTab === 'customers' && <td className="p-3 text-gray-300">LKR {item.totalPurchases?.toLocaleString()}</td>}
-                                        {activeTab === 'suppliers' && <td className="p-3 text-gray-300">{item.company}</td>}
-                                        <td className="p-3">
-                                            <span className={`px-2 py-1 rounded text-xs ${item.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                        <td className="p-5">
+                                            <p className="text-sm font-bold text-text font-mono leading-none">{item.phone}</p>
+                                            <p className="text-xs text-text-muted mt-1.5">{item.email}</p>
+                                        </td>
+                                        {activeTab === 'staff' && (
+                                            <td className="p-5">
+                                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${theme === 'light' ? 'bg-blue-50 text-blue-600' : 'bg-primary/10 text-primary border border-primary/20'}`}>
+                                                    {item.role}
+                                                </span>
+                                            </td>
+                                        )}
+                                        {activeTab === 'staff' && <td className="p-5 font-black text-text font-mono">LKR {item.salary?.toLocaleString()}</td>}
+                                        {activeTab === 'customers' && <td className="p-5 font-black text-primary font-mono">LKR {item.totalPurchases?.toLocaleString()}</td>}
+                                        {activeTab === 'suppliers' && <td className="p-5 font-bold text-text uppercase tracking-tight">{item.company}</td>}
+                                        <td className="p-5">
+                                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${item.status === 'Active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
                                                 {item.status}
                                             </span>
                                         </td>
-                                        <td className="p-3">
+                                        <td className="p-5 text-right">
                                             <button
                                                 onClick={() => handleDelete(item._id)}
-                                                className="text-red-400 hover:text-red-300 transition-colors"
+                                                className="p-2.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -213,140 +227,110 @@ const Registration = () => {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
-            {/* Add Modal */}
+            {/* Modal - Unified for all types */}
             <AnimatePresence>
                 {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="bg-surface border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl"
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                            className={`${theme === 'light' ? 'bg-white' : 'bg-surface'} border border-text/10 rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl`}
                         >
-                            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
-                                <h2 className="text-xl font-bold text-white">Add New {activeTab.slice(0, -1)}</h2>
-                                <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="text-gray-400 hover:text-white">
-                                    <X size={24} />
+                            <div className="p-8 border-b border-text/10 flex justify-between items-center bg-text/5">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                                        <Plus size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black text-text tracking-tight uppercase leading-none">New {activeTab.slice(0, -1)} Registration</h2>
+                                        <p className="text-xs text-text-muted mt-1 font-bold uppercase tracking-widest italic">Personal & Professional Records</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-2.5 rounded-2xl hover:bg-text/5 text-text-muted hover:text-text transition-all">
+                                    <X size={28} />
                                 </button>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            <form onSubmit={handleSubmit} className="p-10 space-y-6 max-h-[65vh] overflow-y-auto custom-scrollbar">
                                 {activeTab === 'staff' && (
-                                    <>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Name</label>
-                                                <input required type="text" value={staffForm.name} onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Email</label>
-                                                <input required type="email" value={staffForm.email} onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Phone</label>
-                                                <input required type="tel" value={staffForm.phone} onChange={(e) => setStaffForm({ ...staffForm, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">NIC</label>
-                                                <input type="text" value={staffForm.nic} onChange={(e) => setStaffForm({ ...staffForm, nic: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Role</label>
-                                                <select required value={staffForm.role} onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value as any })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none">
-                                                    <option value="Admin">Admin</option>
-                                                    <option value="Cashier">Cashier</option>
-                                                    <option value="Technician">Technician</option>
-                                                    <option value="Manager">Manager</option>
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Salary (LKR)</label>
-                                                <input required type="number" value={staffForm.salary} onChange={(e) => setStaffForm({ ...staffForm, salary: Number(e.target.value) })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="col-span-2 space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Full Name</label>
+                                            <input required type="text" value={staffForm.name} onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-text-muted/50`} placeholder="As written on NIC" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Address</label>
-                                            <textarea value={staffForm.address} onChange={(e) => setStaffForm({ ...staffForm, address: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" rows={2} />
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Email Address</label>
+                                            <input required type="email" value={staffForm.email} onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-text-muted/50`} placeholder="work@email.com" />
                                         </div>
-                                    </>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Mobile Contact</label>
+                                            <input required type="tel" value={staffForm.phone} onChange={(e) => setStaffForm({ ...staffForm, phone: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-bold font-mono focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-text-muted/50`} placeholder="07XXXXXXXX" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Designation / Role</label>
+                                            <select required value={staffForm.role} onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value as any })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-black focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all`}>
+                                                <option value="Admin">System Administrator</option>
+                                                <option value="Cashier">Point of Sale Cashier</option>
+                                                <option value="Technician">Repair Technician</option>
+                                                <option value="Manager">Operations Manager</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Salary (LKR)</label>
+                                            <input required type="number" value={staffForm.salary} onChange={(e) => setStaffForm({ ...staffForm, salary: Number(e.target.value) })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-black font-mono focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all`} />
+                                        </div>
+                                    </div>
                                 )}
 
                                 {activeTab === 'customers' && (
-                                    <>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Name</label>
-                                                <input required type="text" value={customerForm.name} onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Phone</label>
-                                                <input required type="tel" value={customerForm.phone} onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Email</label>
-                                                <input type="email" value={customerForm.email} onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">NIC</label>
-                                                <input type="text" value={customerForm.nic} onChange={(e) => setCustomerForm({ ...customerForm, nic: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="col-span-2 space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Customer Full Name</label>
+                                            <input required type="text" value={customerForm.name} onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-text-muted/50`} />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Address</label>
-                                            <textarea value={customerForm.address} onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" rows={2} />
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Phone Number</label>
+                                            <input required type="tel" value={customerForm.phone} onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-black font-mono focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-text-muted/50`} />
                                         </div>
-                                    </>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Email (Optional)</label>
+                                            <input type="email" value={customerForm.email} onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-text-muted/50`} />
+                                        </div>
+                                        <div className="col-span-2 space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Permanent Address</label>
+                                            <textarea value={customerForm.address} onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all h-24`} />
+                                        </div>
+                                    </div>
                                 )}
 
                                 {activeTab === 'suppliers' && (
-                                    <>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Name</label>
-                                                <input required type="text" value={supplierForm.name} onChange={(e) => setSupplierForm({ ...supplierForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Company</label>
-                                                <input type="text" value={supplierForm.company} onChange={(e) => setSupplierForm({ ...supplierForm, company: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Phone</label>
-                                                <input required type="tel" value={supplierForm.phone} onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm text-gray-400">Email</label>
-                                                <input type="email" value={supplierForm.email} onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" />
-                                            </div>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Supplier Name</label>
+                                            <input required type="text" value={supplierForm.name} onChange={(e) => setSupplierForm({ ...supplierForm, name: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all`} />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Address</label>
-                                            <textarea value={supplierForm.address} onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" rows={2} />
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Company / Entity</label>
+                                            <input type="text" value={supplierForm.company} onChange={(e) => setSupplierForm({ ...supplierForm, company: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all`} />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Payment Terms</label>
-                                            <input type="text" value={supplierForm.paymentTerms} onChange={(e) => setSupplierForm({ ...supplierForm, paymentTerms: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none" placeholder="e.g., Net 30" />
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted ml-1">Payment Method Terms</label>
+                                            <input type="text" value={supplierForm.paymentTerms} onChange={(e) => setSupplierForm({ ...supplierForm, paymentTerms: e.target.value })} className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/10 rounded-[1.25rem] px-6 py-4 text-text font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all`} placeholder="e.g. Net 30, Cash on Delivery" />
                                         </div>
-                                    </>
+                                    </div>
                                 )}
 
-                                <div className="pt-4 border-t border-white/10 flex justify-end gap-3">
-                                    <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-4 py-2 rounded-lg text-gray-400 hover:bg-white/5 transition-colors">
-                                        Cancel
+                                <div className="pt-8 flex justify-end gap-4">
+                                    <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-8 py-4 rounded-2xl text-text-muted font-black uppercase tracking-widest hover:bg-text/5 transition-all text-sm">
+                                        Discard
                                     </button>
-                                    <button type="submit" className="px-6 py-2 rounded-lg bg-primary text-background font-bold hover:bg-primary/90 transition-colors">
-                                        Create
+                                    <button type="submit" className="px-12 py-4 rounded-2xl bg-primary text-white font-black uppercase tracking-widest shadow-xl shadow-primary/25 hover:opacity-90 active:scale-95 transition-all text-sm">
+                                        Finalize Registration
                                     </button>
                                 </div>
                             </form>

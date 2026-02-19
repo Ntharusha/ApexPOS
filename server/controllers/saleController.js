@@ -5,12 +5,13 @@ const ProductModel = require('../models/Product'); // Assuming standalone model 
 exports.createSale = async (req, res) => {
     try {
         console.log("Processing Sale:", req.body);
-        const { items, totalAmount, paymentMethod } = req.body;
+        const { items, totalAmount, paymentMethod, discount } = req.body;
 
         // 1. Create Sale Record
         const sale = new Sale({
             items,
             totalAmount,
+            discount,
             paymentMethod,
             date: new Date()
         });

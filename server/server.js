@@ -35,6 +35,11 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/registration', registrationRoutes);
+app.use('/api/expenses', require('./routes/expenseRoutes'));
+app.use('/api/hp', require('./routes/hpRoutes'));
+app.use('/api/reloads', require('./routes/reloadRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/apexpos', {

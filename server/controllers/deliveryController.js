@@ -15,6 +15,10 @@ exports.createDelivery = async (req, res) => {
     const delivery = new Delivery(req.body);
     try {
         const newDelivery = await delivery.save();
+
+        const io = req.app.get('io');
+        if (io) io.emit('dashboardUpdate');
+
         res.status(201).json(newDelivery);
     } catch (error) {
         res.status(400).json({ message: error.message });

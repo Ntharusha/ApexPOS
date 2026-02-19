@@ -43,6 +43,7 @@ const saleSchema = new mongoose.Schema({
         quantity: Number
     }],
     totalAmount: Number,
+    discount: { type: Number, default: 0 },
     paymentMethod: String,
     date: { type: Date, default: Date.now }
 });
@@ -96,6 +97,20 @@ const supplierSchema = new mongoose.Schema({
     status: { type: String, default: 'Active', enum: ['Active', 'Inactive'] }
 }, { timestamps: true });
 
+const reloadSchema = new mongoose.Schema({
+    provider: { type: String, required: true },
+    number: { type: String, required: true },
+    amount: { type: Number, required: true },
+    status: { type: String, default: 'Completed' }, // For now, assume completed
+}, { timestamps: true });
+
+const notificationSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    type: { type: String, enum: ['Info', 'Warning', 'Alert', 'Success'], default: 'Info' },
+    isRead: { type: Boolean, default: false }
+}, { timestamps: true });
+
 module.exports = {
     Repair: mongoose.model('Repair', repairSchema),
     Category: mongoose.model('Category', categorySchema),
@@ -105,5 +120,7 @@ module.exports = {
     Delivery: mongoose.model('Delivery', deliverySchema),
     Staff: mongoose.model('Staff', staffSchema),
     Customer: mongoose.model('Customer', customerSchema),
-    Supplier: mongoose.model('Supplier', supplierSchema)
+    Supplier: mongoose.model('Supplier', supplierSchema),
+    Reload: mongoose.model('Reload', reloadSchema),
+    Notification: mongoose.model('Notification', notificationSchema)
 };

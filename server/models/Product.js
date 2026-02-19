@@ -4,6 +4,7 @@ const productSchema = new mongoose.Schema({
     name: { type: String, required: true },
     barcode: { type: String, sparse: true },
     category: { type: String, required: true },
+    brand: { type: String, default: 'Generic' },
     price: { type: Number, required: true },
     costPrice: { type: Number, default: 0 },
     stock: { type: Number, default: 0 },

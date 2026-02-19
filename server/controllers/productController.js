@@ -39,3 +39,25 @@ exports.updateStock = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Refill product stock
+exports.refillStock = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { quantity } = req.body; // quantity to add
+        const product = await Product.findById(id);
+
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+
+        product.stock += Number(quantity);
+        await product.save();
+
+        // Notify Dashboard via Socket.io if available
+        const io = req.app.get('io');
+        if (io) io.emit('dashboardUpdate');
+
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

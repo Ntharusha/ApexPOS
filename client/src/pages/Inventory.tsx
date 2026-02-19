@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, X, RefreshCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
 
 interface Product {
     _id?: string;
     name: string;
+    brand?: string;
     price: number;
     category: string;
     stock: number;
@@ -20,11 +21,15 @@ const Inventory = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isRefillModalOpen, setIsRefillModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [refillAmount, setRefillAmount] = useState<number>(0);
     const theme = useStore(state => state.theme);
 
     // Form State
     const [formData, setFormData] = useState<Product>({
         name: '',
+        brand: '',
         price: 0,
         costPrice: 0,
         category: '',
@@ -71,7 +76,7 @@ const Inventory = () => {
             if (res.ok) {
                 await fetchProducts();
                 setIsModalOpen(false);
-                setFormData({ name: '', price: 0, costPrice: 0, category: '', stock: 0, barcode: '', image: '' });
+                setFormData({ name: '', brand: '', price: 0, costPrice: 0, category: '', stock: 0, barcode: '', image: '' });
                 alert('Product added successfully!');
             } else {
                 const error = await res.json();
@@ -85,7 +90,36 @@ const Inventory = () => {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure?')) return;
-        setProducts(products.filter(p => p._id !== id));
+        try {
+            const res = await fetch(`http://localhost:5000/api/products/${id}`, { method: 'DELETE' });
+            if (res.ok) fetchProducts();
+        } catch (error) {
+            console.error("Delete failed", error);
+        }
+    };
+
+    const handleRefillSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedProduct?._id) return;
+
+        try {
+            const res = await fetch(`http://localhost:5000/api/products/${selectedProduct._id}/refill`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: refillAmount })
+            });
+
+            if (res.ok) {
+                await fetchProducts();
+                setIsRefillModalOpen(false);
+                setRefillAmount(0);
+                setSelectedProduct(null);
+            } else {
+                alert('Failed to refill stock');
+            }
+        } catch (error) {
+            console.error("Refill error", error);
+        }
     };
 
     const filteredProducts = products.filter(p =>
@@ -155,6 +189,16 @@ const Inventory = () => {
                                     <td className="p-5 text-sm text-text-muted font-mono">{product.barcode || '-'}</td>
                                     <td className="p-5 text-right">
                                         <div className="flex items-center justify-end gap-3">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedProduct(product);
+                                                    setIsRefillModalOpen(true);
+                                                }}
+                                                title="Refill Stock"
+                                                className="p-2.5 hover:bg-emerald-500/10 rounded-xl text-emerald-500 transition-all"
+                                            >
+                                                <RefreshCcw size={18} />
+                                            </button>
                                             <button className="p-2.5 hover:bg-blue-500/10 rounded-xl text-blue-500 transition-all">
                                                 <Edit size={18} />
                                             </button>
@@ -200,6 +244,17 @@ const Inventory = () => {
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-text/5'} border border-text/10 rounded-2xl p-3.5 text-text focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder-text-muted`}
                                         placeholder="Enter product name..."
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-text ml-1 text-text-muted">Brand</label>
+                                    <input
+                                        type="text"
+                                        value={formData.brand}
+                                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                        className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-text/5'} border border-text/10 rounded-2xl p-3.5 text-text focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder-text-muted`}
+                                        placeholder="Enter brand name..."
                                     />
                                 </div>
 
@@ -276,6 +331,63 @@ const Inventory = () => {
                                     </button>
                                 </div>
                             </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Refill Stock Modal */}
+            <AnimatePresence>
+                {isRefillModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className={`${theme === 'light' ? 'bg-white' : 'bg-surface'} border border-text/10 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-8`}
+                        >
+                            <div className="flex flex-col items-center text-center space-y-4">
+                                <div className="p-5 bg-emerald-500/10 rounded-full text-emerald-500 mb-2">
+                                    <RefreshCcw size={40} />
+                                </div>
+                                <h2 className="text-2xl font-black text-text uppercase tracking-tight">Refill Stock</h2>
+                                <p className="text-sm font-bold text-text-muted uppercase tracking-widest leading-relaxed">
+                                    {selectedProduct?.name} <br />
+                                    <span className="text-emerald-500">Current: {selectedProduct?.stock} units</span>
+                                </p>
+
+                                <form onSubmit={handleRefillSubmit} className="w-full space-y-6 pt-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Quantity to Add</label>
+                                        <input
+                                            autoFocus
+                                            required
+                                            type="number"
+                                            min="1"
+                                            value={refillAmount || ''}
+                                            onChange={(e) => setRefillAmount(Number(e.target.value))}
+                                            className={`w-full ${theme === 'light' ? 'bg-slate-50' : 'bg-text/5'} border-2 border-text/10 rounded-2xl p-4 text-center text-3xl font-black text-text focus:border-emerald-500 outline-none transition-all placeholder-text/20`}
+                                            placeholder="00"
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsRefillModalOpen(false)}
+                                            className="flex-1 py-4 text-sm font-black text-text-muted uppercase tracking-widest hover:bg-text/5 rounded-2xl transition-all"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="flex-1 py-4 bg-emerald-500 text-white text-sm font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all"
+                                        >
+                                            Confirm
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </motion.div>
                     </div>
                 )}

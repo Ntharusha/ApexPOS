@@ -12,6 +12,7 @@ const RetailPOS = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [categories, setCategories] = useState<string[]>(['All']);
+    const [discount, setDiscount] = useState<number>(0);
 
     useEffect(() => {
         // Fetch Categories
@@ -45,6 +46,7 @@ const RetailPOS = () => {
     });
 
     const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const payableTotal = Math.max(0, cartTotal - discount);
 
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -65,7 +67,8 @@ const RetailPOS = () => {
                     price: item.price,
                     quantity: item.quantity
                 })),
-                totalAmount: cartTotal,
+                totalAmount: payableTotal,
+                discount: discount,
                 paymentMethod
             };
 
@@ -241,11 +244,20 @@ const RetailPOS = () => {
                         </div>
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-text-muted font-bold">Discount</span>
-                            <span className="text-emerald-500 font-mono font-bold">- LKR 0</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-emerald-500 font-bold">- LKR</span>
+                                <input
+                                    type="number"
+                                    value={discount === 0 ? '' : discount}
+                                    onChange={(e) => setDiscount(Number(e.target.value))}
+                                    className={`w-24 text-right bg-emerald-500/10 border-none rounded-lg px-2 py-1 text-emerald-500 font-mono font-bold focus:ring-1 focus:ring-emerald-500 outline-none`}
+                                    placeholder="0"
+                                />
+                            </div>
                         </div>
                         <div className="flex justify-between items-center pt-4 border-t border-text/10">
                             <span className="text-text font-black text-xl tracking-tight">Payable</span>
-                            <span className="text-primary font-black text-2xl tracking-tight font-mono">LKR {cartTotal.toLocaleString()}</span>
+                            <span className="text-primary font-black text-2xl tracking-tight font-mono">LKR {payableTotal.toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -283,7 +295,8 @@ const RetailPOS = () => {
                         ref={componentRef}
                         saleId={`INV-${Math.floor(Math.random() * 100000)}`}
                         items={cart}
-                        total={cartTotal}
+                        total={payableTotal}
+                        discount={discount}
                         date={new Date().toLocaleDateString()}
                     />
                 </div>

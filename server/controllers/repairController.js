@@ -15,6 +15,10 @@ exports.createRepair = async (req, res) => {
     try {
         const repair = new Repair(req.body);
         const newRepair = await repair.save();
+
+        const io = req.app.get('io');
+        if (io) io.emit('dashboardUpdate');
+
         res.status(201).json(newRepair);
     } catch (error) {
         res.status(400).json({ message: error.message });

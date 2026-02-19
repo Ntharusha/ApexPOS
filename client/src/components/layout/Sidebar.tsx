@@ -16,24 +16,25 @@ import {
     CreditCard,
     DollarSign
 } from 'lucide-react';
+import AnimatedIcon from '../common/AnimatedIcon';
 import { useStore } from '../../store/useStore';
 import { motion } from 'framer-motion';
 
 const menuItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/inventory', icon: Package, label: 'Inventory' },
-    { path: '/retail', icon: ShoppingCart, label: 'Retail POS' },
-    { path: '/delivery', icon: Truck, label: 'Delivery' },
-    { path: '/sales', icon: History, label: 'Sales History' },
-    { path: '/categories', icon: Tags, label: 'Categories' },
-    { path: '/repairs', icon: Wrench, label: 'Repairs' },
-    { path: '/reload', icon: Smartphone, label: 'Reload' },
-    { path: '/registration', icon: Users, label: 'Registration' },
-    { path: '/add-job', icon: PlusCircle, label: 'Add Job' },
-    { path: '/reports', icon: FileText, label: 'Reports' },
-    { path: '/notifications', icon: Bell, label: 'Notifications' },
-    { path: '/hp', icon: CreditCard, label: 'Hire Purchase' },
-    { path: '/expenses', icon: DollarSign, label: 'Expenses' },
+    { path: '/', icon: LayoutDashboard, label: 'Dashboard', animation: 'hover-rotate' as const },
+    { path: '/inventory', icon: Package, label: 'Inventory', animation: 'hover-scale' as const },
+    { path: '/retail', icon: ShoppingCart, label: 'Retail POS', animation: 'bounce' as const },
+    { path: '/delivery', icon: Truck, label: 'Delivery', animation: 'hover-scale' as const },
+    { path: '/sales', icon: History, label: 'Sales History', animation: 'hover-rotate' as const },
+    { path: '/categories', icon: Tags, label: 'Categories', animation: 'hover-scale' as const },
+    { path: '/repairs', icon: Wrench, label: 'Repairs', animation: 'hover-rotate' as const },
+    { path: '/reload', icon: Smartphone, label: 'Reload', animation: 'pulse' as const },
+    { path: '/registration', icon: Users, label: 'Registration', animation: 'hover-scale' as const },
+    { path: '/add-job', icon: PlusCircle, label: 'Add Job', animation: 'hover-rotate' as const },
+    { path: '/reports', icon: FileText, label: 'Reports', animation: 'hover-scale' as const },
+    { path: '/notifications', icon: Bell, label: 'Notifications', animation: 'pulse' as const },
+    { path: '/hp', icon: CreditCard, label: 'Hire Purchase', animation: 'hover-scale' as const },
+    { path: '/expenses', icon: DollarSign, label: 'Expenses', animation: 'bounce' as const },
 ];
 
 const Sidebar = () => {
@@ -64,16 +65,28 @@ const Sidebar = () => {
                                 : `text-text-muted hover:bg-text/5 hover:text-text`}
             `}
                     >
-                        <item.icon size={20} className="min-w-[20px]" />
-                        <span className={`ml-3 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${!sidebarOpen && 'w-0 opacity-0'}`}>
-                            {item.label}
-                        </span>
+                        {({ isActive }) => (
+                            <>
+                                <AnimatedIcon
+                                    icon={item.icon}
+                                    animation={item.animation}
+                                    active={isActive}
+                                    size={20}
+                                    className="min-w-[20px]"
+                                />
+                                <span className={`ml-3 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${!sidebarOpen && 'w-0 opacity-0'}`}>
+                                    {item.label}
+                                </span>
 
-                        {/* Hover Tooltip for collapsed state */}
-                        {!sidebarOpen && (
-                            <div className="absolute left-full ml-4 px-3 py-1.5 bg-text text-surface rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 pointer-events-none shadow-xl z-50 transition-opacity">
-                                {item.label}
-                            </div>
+                                {/* Hover Tooltip for collapsed state */}
+
+                                {/* Hover Tooltip for collapsed state */}
+                                {!sidebarOpen && (
+                                    <div className="absolute left-full ml-4 px-3 py-1.5 bg-text text-surface rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 pointer-events-none shadow-xl z-50 transition-opacity">
+                                        {item.label}
+                                    </div>
+                                )}
+                            </>
                         )}
                     </NavLink>
                 ))}

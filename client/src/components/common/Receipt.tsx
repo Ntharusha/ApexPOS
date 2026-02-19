@@ -4,10 +4,13 @@ export interface ReceiptProps {
     saleId: string;
     items: Array<{ name: string; quantity: number; price: number }>;
     total: number;
+    discount: number;
     date: string;
 }
 
 const Receipt = forwardRef<HTMLDivElement, ReceiptProps>((props, ref) => {
+    const subtotal = props.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
     return (
         <div ref={ref} className="p-8 max-w-[300px] bg-white text-black font-mono text-sm">
             <div className="text-center border-b border-black pb-4 mb-4">
@@ -40,9 +43,21 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>((props, ref) => {
                 </tbody>
             </table>
 
-            <div className="border-t border-black pt-2 flex justify-between font-bold text-lg">
-                <span>Total</span>
-                <span>{props.total.toLocaleString()}</span>
+            <div className="border-t border-black pt-2 space-y-1">
+                <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>{subtotal.toLocaleString()}</span>
+                </div>
+                {props.discount > 0 && (
+                    <div className="flex justify-between text-black">
+                        <span>Discount</span>
+                        <span>-{props.discount.toLocaleString()}</span>
+                    </div>
+                )}
+                <div className="flex justify-between font-bold text-lg pt-1 border-t border-black">
+                    <span>Total</span>
+                    <span>{props.total.toLocaleString()}</span>
+                </div>
             </div>
 
             <div className="mt-8 text-center text-xs">
