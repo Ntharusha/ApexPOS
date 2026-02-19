@@ -69,7 +69,15 @@ const Dashboard = () => {
         return <div className="p-10 text-center text-text-muted">Loading dashboard...</div>;
     }
 
+<<<<<<< HEAD
     const COLORS = ['#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+=======
+    return (
+        <div className="space-y-6">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                Dashboard
+            </h1>
+>>>>>>> f0cc89ba037e946b9826f5337a060352ff3001e3
 
     return (
         <div className="space-y-6 pb-10">
