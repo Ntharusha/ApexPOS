@@ -185,7 +185,7 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                     ) : (
                         <div className="flex items-center justify-center h-[320px] text-text-muted font-bold italic">
-                            Synthesizing trend data...
+                            Synthesizing trend data.......
                         </div>
                     )}
                 </div>
