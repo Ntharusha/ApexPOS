@@ -1,6 +1,7 @@
 import React from 'react';
-import { Menu, Bell, Search, User } from 'lucide-react';
+import { Menu, Bell, Search } from 'lucide-react';
 import { useStore } from '../../store/useStore';
+import ThemeToggle from '../ThemeToggle';
 
 const Header = () => {
     const { toggleSidebar, notifications } = useStore();
@@ -10,7 +11,7 @@ const Header = () => {
             <div className="flex items-center gap-4">
                 <button
                     onClick={toggleSidebar}
-                    className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
+                    className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-text transition-colors"
                 >
                     <Menu size={20} />
                 </button>
@@ -25,7 +26,9 @@ const Header = () => {
             </div>
 
             <div className="flex items-center gap-4">
-                <button className="relative p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors">
+                <ThemeToggle />
+
+                <button className="relative p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-text transition-colors">
                     <Bell size={20} />
                     {notifications > 0 && (
                         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_#38bdf8]"></span>

@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { Outlet } from 'react-router-dom';
+import { useStore } from '../../store/useStore';
 
 const Layout = () => {
+    const theme = useStore(state => state.theme);
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+    }, [theme]);
+
     return (
-        <div className="flex bg-background min-h-screen text-white font-sans overflow-hidden">
+        <div className="flex bg-background min-h-screen text-text font-sans overflow-hidden transition-colors duration-300">
             <Sidebar />
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 <Header />

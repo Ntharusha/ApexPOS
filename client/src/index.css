@@ -1,25 +1,60 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0f172a;
-  --color-primary: #38bdf8;
-  --color-secondary: #10b981;
-  --color-accent: #38bdf8;
-  --color-surface: #1e293b;
+  --color-background: var(--background);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
 
   --font-sans: 'Inter', sans-serif;
 }
 
+:root {
+  --background: #0f172a;
+  --primary: #38bdf8;
+  --secondary: #10b981;
+  --accent: #38bdf8;
+  --surface: #1e293b;
+  --text: #ffffff;
+  --text-muted: #94a3b8;
+}
+
+[data-theme='light'] {
+  --background: #f1f5f9;
+  --primary: #2563eb;
+  --secondary: #059669;
+  --accent: #2563eb;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --text-muted: #64748b;
+}
+
 @layer utilities {
   .glass {
-    @apply bg-surface/30 backdrop-blur-md border border-white/10 shadow-lg;
+    @apply bg-surface/30 backdrop-blur-md border border-white/10 shadow-lg transition-colors duration-300;
+  }
+
+  [data-theme='light'] .glass {
+    @apply bg-surface/90 backdrop-blur-md border border-slate-200/50 shadow-sm;
   }
 
   .glass-card {
-    @apply bg-surface/40 backdrop-blur-lg border border-white/5 rounded-2xl shadow-xl;
+    @apply bg-surface/40 backdrop-blur-lg border border-white/5 rounded-2xl shadow-xl transition-colors duration-300;
+  }
+
+  [data-theme='light'] .glass-card {
+    @apply bg-surface/100 border border-slate-200/50 rounded-3xl shadow-lg;
   }
 }
 
 body {
-  @apply bg-background text-white antialiased font-sans;
+  @apply bg-background text-text antialiased font-sans transition-colors duration-300;
+}
+
+[data-theme='light'] body {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  background-attachment: fixed;
 }

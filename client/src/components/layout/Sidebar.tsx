@@ -37,15 +37,15 @@ const menuItems = [
 ];
 
 const Sidebar = () => {
-    const { sidebarOpen } = useStore();
+    const { sidebarOpen, theme } = useStore();
 
     return (
         <motion.div
             initial={{ width: sidebarOpen ? 240 : 80 }}
             animate={{ width: sidebarOpen ? 240 : 80 }}
-            className="h-screen sticky top-0 left-0 bg-surface/30 backdrop-blur-md border-r border-white/10 z-50 flex flex-col"
+            className={`h-screen sticky top-0 left-0 ${theme === 'light' ? 'bg-surface border-r border-slate-200 shadow-xl' : 'bg-surface/30 backdrop-blur-md border-r border-white/10'} z-50 flex flex-col transition-all duration-300`}
         >
-            <div className="h-16 flex items-center justify-center border-b border-white/10">
+            <div className={`h-16 flex items-center justify-center border-b ${theme === 'light' ? 'border-slate-100' : 'border-white/10'}`}>
                 <h1 className={`font-bold text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent truncate transition-all duration-300 ${!sidebarOpen && 'scale-0'}`}>
                     ApexPOS
                 </h1>
@@ -60,8 +60,8 @@ const Sidebar = () => {
                         className={({ isActive }) => `
               relative flex items-center px-4 py-3 mb-1 mx-2 rounded-xl transition-all duration-200 group
               ${isActive
-                                ? 'bg-primary/20 text-primary shadow-[0_0_15px_rgba(56,189,248,0.3)]'
-                                : 'text-gray-400 hover:bg-white/5 hover:text-gray-100'}
+                                ? 'bg-primary/10 text-primary shadow-sm font-semibold'
+                                : `text-text-muted hover:bg-text/5 hover:text-text`}
             `}
                     >
                         <item.icon size={20} className="min-w-[20px]" />
@@ -71,7 +71,7 @@ const Sidebar = () => {
 
                         {/* Hover Tooltip for collapsed state */}
                         {!sidebarOpen && (
-                            <div className="absolute left-full ml-4 px-2 py-1 bg-surface border border-white/10 rounded-md text-sm text-white opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                            <div className="absolute left-full ml-4 px-3 py-1.5 bg-text text-surface rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 pointer-events-none shadow-xl z-50 transition-opacity">
                                 {item.label}
                             </div>
                         )}
@@ -79,14 +79,14 @@ const Sidebar = () => {
                 ))}
             </nav>
 
-            <div className="p-4 border-t border-white/10">
+            <div className={`p-4 border-t ${theme === 'light' ? 'border-slate-100' : 'border-white/10'}`}>
                 <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-background font-bold">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold shadow-md">
                         A
                     </div>
                     <div className={`ml-3 overflow-hidden transition-all duration-300 ${!sidebarOpen && 'w-0 opacity-0'}`}>
-                        <p className="text-sm font-medium text-white">Admin</p>
-                        <p className="text-xs text-gray-400">Manager</p>
+                        <p className="text-sm font-bold text-text">Admin</p>
+                        <p className="text-xs text-text-muted font-medium">Manager</p>
                     </div>
                 </div>
             </div>

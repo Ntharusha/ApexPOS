@@ -18,6 +18,8 @@ export interface CartItem extends Product {
 interface AppState {
     sidebarOpen: boolean;
     toggleSidebar: () => void;
+    theme: 'light' | 'dark';
+    setTheme: (theme: 'light' | 'dark') => void;
     user: { name: string; role: string } | null;
     notifications: number;
 
@@ -37,6 +39,8 @@ export const useStore = create<AppState>()(
         (set) => ({
             sidebarOpen: true,
             toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+            theme: 'dark',
+            setTheme: (theme) => set({ theme }),
             user: null,
             isAuthenticated: false,
             notifications: 3,
@@ -70,7 +74,12 @@ export const useStore = create<AppState>()(
         }),
         {
             name: 'apex-pos-storage',
-            partialize: (state) => ({ cart: state.cart, user: state.user, isAuthenticated: state.isAuthenticated }),
+            partialize: (state) => ({
+                cart: state.cart,
+                user: state.user,
+                isAuthenticated: state.isAuthenticated,
+                theme: state.theme
+            }),
         }
     )
 );
