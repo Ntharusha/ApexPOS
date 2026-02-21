@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { DollarSign, Package, Wrench, Truck, Activity, ArrowUpRight, AlertCircle, ShoppingBag } from 'lucide-react';
+import { DollarSign, Package, Wrench, Truck, Activity, ArrowUpRight, AlertCircle, ShoppingBag, CheckSquare } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 const Dashboard = () => {
@@ -69,15 +69,7 @@ const Dashboard = () => {
         return <div className="p-10 text-center text-text-muted">Loading dashboard...</div>;
     }
 
-<<<<<<< HEAD
     const COLORS = ['#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-=======
-    return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                Dashboard
-            </h1>
->>>>>>> f0cc89ba037e946b9826f5337a060352ff3001e3
 
     return (
         <div className="space-y-6 pb-10">
@@ -254,10 +246,36 @@ const Dashboard = () => {
                                         <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">{product.category}</p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-lg font-black text-red-500 font-mono">{product.stock}</p>
-                                    <p className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em]">Remaining</p>
+                                <div className="flex items-center gap-4">
+                                    <div className="text-right">
+                                        <p className="text-lg font-black text-red-500 font-mono">{product.stock}</p>
+                                        <p className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em]">Remaining</p>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await fetch('http://localhost:5000/api/notifications', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({
+                                                        title: 'Purchase Request',
+                                                        description: `High Priority: RESTOCK ${product.name} (Stock: ${product.stock}). Manual PO requested from Dashboard.`,
+                                                        type: 'Alert'
+                                                    })
+                                                });
+                                                alert(`PO Request sent for ${product.name}! Check notifications.`);
+                                            } catch (err) {
+                                                console.error(err);
+                                            }
+                                        }}
+                                        className="p-2 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-lg transition-all"
+                                        title="One-click PO Request"
+                                    >
+                                        <ShoppingBag size={14} />
+                                    </button>
+
                                 </div>
+
                             </div>
                         )) : (
                             <div className="py-12 flex flex-col items-center justify-center text-emerald-500 bg-emerald-500/5 rounded-3xl border border-dashed border-emerald-500/20">

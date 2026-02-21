@@ -1,4 +1,5 @@
-const { Sale, Repair, Staff, Customer, Expense, Delivery } = require('../models/AllModels');
+const { Sale, Repair, Staff, Customer, Expense, Delivery, StockMovement } = require('../models/AllModels');
+
 const Product = require('../models/Product');
 
 exports.getDashboardStats = async (req, res) => {
@@ -140,6 +141,10 @@ exports.getRecentActivity = async (req, res) => {
             .limit(5)
             .select('customerName deviceModel status createdAt');
 
+        const recentMovements = await StockMovement.find()
+            .sort({ createdAt: -1 })
+            .limit(5);
+
         const activities = [
             ...recentSales.map(sale => ({
                 type: 'sale',
@@ -150,8 +155,14 @@ exports.getRecentActivity = async (req, res) => {
                 type: 'repair',
                 message: `Repair ${repair.status}: ${repair.deviceModel} (${repair.customerName})`,
                 time: repair.createdAt
+            })),
+            ...recentMovements.map(move => ({
+                type: 'stock',
+                message: `Stock ${move.type}: ${move.productName} (${move.quantity})`,
+                time: move.createdAt
             }))
-        ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+        ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
+
 
         res.json(activities);
     } catch (error) {

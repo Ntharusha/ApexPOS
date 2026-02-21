@@ -1,0 +1,19 @@
+🛡️ Core Business Operations
+Retail Point of Sale (POS): A streamlined interface for processing customer sales and transactions.
+Inventory Management: Full control over your stock, including product details, quantities, and low-stock tracking.
+Category Management: Organize products into logical groups for easier management and reporting.
+Sales History: A dedicated area to view, search, and manage all past transactions.
+🛠️ Service & Specialized Modules
+Repair Management: End-to-end tracking of repair jobs, from receiving a device ("Add Job") to completion and delivery.
+Hire Purchase (HP): Manage installment-based sales, including payment tracking and customer balances.
+Reload Services: Integrated system for managing digital reloads or mobile top-ups.
+Delivery Tracking: Manage and monitor the status of deliveries for sold products or services.
+📊 Analytics & Monitoring
+Dashboard: Real-time visual overview of business performance, including daily/weekly/monthly sales stats and brand-wise summaries.
+Comprehensive Reports: Generate detailed reports on sales, expenses, and business health.
+Notifications: Real-time system alerts for critical events like low stock levels or job updates.
+👤 Administration & Support
+Registration: Manage customer profiles and potentially staff/user accounts.
+Expense Management: Track business costs and overheads to monitor net profitability.
+Theme Support: Modern UI with both Light and Dark mode options.
+Is there a specific feature you'd like me to dive deeper into?

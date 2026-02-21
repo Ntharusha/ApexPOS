@@ -5,5 +5,7 @@ const hpController = require('../controllers/hpController');
 router.get('/', hpController.getHPAccounts);
 router.post('/', hpController.createHPAccount);
 router.patch('/:id/collect', hpController.collectPayment);
+router.delete('/:id', hpController.deleteHPAccount);
 
 module.exports = router;
+

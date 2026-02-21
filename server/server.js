@@ -11,6 +11,8 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const registrationRoutes = require('./routes/registrationRoutes');
+const authRoutes = require('./routes/authRoutes');
+const hospitalityRoutes = require('./routes/hospitalityRoutes'); // Added this line
 
 const app = express();
 const server = http.createServer(app);
@@ -28,6 +30,7 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/repairs', repairRoutes);
@@ -40,6 +43,12 @@ app.use('/api/hp', require('./routes/hpRoutes'));
 app.use('/api/reloads', require('./routes/reloadRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/shifts', require('./routes/shiftRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
+app.use('/api/hospitality', hospitalityRoutes);
+
+
+
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/apexpos', {

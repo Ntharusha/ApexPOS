@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notificationController');
 
+router.post('/', notificationController.createNotification);
 router.get('/', notificationController.getNotifications);
+
 router.patch('/:id/read', notificationController.markAsRead);
 router.patch('/read-all', notificationController.markAllAsRead);
 router.delete('/clear-all', notificationController.clearAll);

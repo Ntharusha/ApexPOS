@@ -24,6 +24,11 @@ import Reports from './pages/Reports';
 import HirePurchase from './pages/HirePurchase';
 import Expenses from './pages/Expenses';
 import Notifications from './pages/Notifications';
+import StaffManagement from './pages/StaffManagement';
+import Settings from './pages/Settings';
+import TableManagement from './pages/TableManagement';
+
+
 
 // Placeholder components for other routes
 const Placeholder = ({ title }: { title: string }) => (
@@ -55,7 +60,12 @@ function App() {
                         <Route path="notifications" element={<Notifications />} />
                         <Route path="hp" element={<HirePurchase />} />
                         <Route path="expenses" element={<Expenses />} />
+                        <Route path="staff" element={<StaffManagement />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="hospitality" element={<TableManagement />} />
                     </Route>
+
+
                 </Route>
             </Routes>
         </BrowserRouter>

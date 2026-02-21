@@ -6,5 +6,8 @@ router.get('/', productController.getProducts);
 router.post('/', productController.createProduct);
 router.patch('/:id/stock', productController.updateStock);
 router.patch('/:id/refill', productController.refillStock);
+router.post('/:id/batches', productController.addBatch);
+router.post('/check-expiries', productController.checkExpiries);
+
 
 module.exports = router;

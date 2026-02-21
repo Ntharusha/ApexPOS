@@ -12,8 +12,9 @@ router.get('/stock', reportController.getStockReports);
 router.get('/salary', reportController.getSalaryReports);
 router.get('/expenses', reportController.getExpensesReports);
 router.get('/repair-profit', reportController.getRepairProfitReports);
-router.get('/suppliers', reportController.getSupplierReports);
-router.get('/vehicle-load', reportController.getVehicleLoadReports);
+router.get('/tax-summary', reportController.getTaxSummary);
+router.get('/product-performance', reportController.getProductPerformance);
 router.get('/type/:type', reportController.getGenericReport);
+
 
 module.exports = router;

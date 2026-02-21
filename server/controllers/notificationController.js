@@ -40,3 +40,18 @@ exports.clearAll = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// Create notification
+exports.createNotification = async (req, res) => {
+    try {
+        const notification = new Notification(req.body);
+        await notification.save();
+
+        // Emit socket update so frontend updates live
+        const io = req.app.get('io');
+        if (io) io.emit('notificationUpdate');
+
+        res.status(201).json(notification);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

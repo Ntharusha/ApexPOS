@@ -10,7 +10,7 @@ exports.getHPAccounts = async (req, res) => {
     }
 };
 
-// Create a new HP account
+// Create a new HP account (with pre-generated installments from frontend OR auto-generate on server)
 exports.createHPAccount = async (req, res) => {
     const account = new HirePurchase(req.body);
     try {
@@ -21,7 +21,7 @@ exports.createHPAccount = async (req, res) => {
     }
 };
 
-// Collect payment (update an installment)
+// Collect payment — mark next installment as paid
 exports.collectPayment = async (req, res) => {
     try {
         const { id } = req.params;
@@ -45,3 +45,16 @@ exports.collectPayment = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Delete an HP account
+exports.deleteHPAccount = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const account = await HirePurchase.findByIdAndDelete(id);
+        if (!account) return res.status(404).json({ message: 'HP Account not found' });
+        res.json({ message: 'HP Account deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+

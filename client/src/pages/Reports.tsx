@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+
 import {
     BarChart3, Box, TrendingUp, Package,
     Users, ClipboardCheck, Wallet, RefreshCcw,
     UserSquare2, PenTool, PieChart, Truck,
     Scale, FileText, CreditCard, UserCheck,
-    Banknote, Container, X, Download
+    Banknote, Container, X, Download, DollarSign, Activity
 } from 'lucide-react';
+
 import { useStore } from '../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -52,20 +55,36 @@ const reportCategories: ReportCategory[] = [
         endpoint: "/api/reports/stock"
     },
     {
+        title: "VAT & SSCL Summary",
+        desc: "Quarterly tax summary for IRDSL returns.",
+        icon: Scale,
+        color: "bg-blue-600/10 text-blue-600",
+        emoji: "⚖️",
+        endpoint: "/api/reports/tax-summary"
+    },
+    {
+        title: "Product Performance",
+        desc: "Top sellers and revenue by product.",
+        icon: TrendingUp,
+        color: "bg-indigo-500/10 text-indigo-500",
+        emoji: "🏆",
+        endpoint: "/api/reports/product-performance"
+    },
+    {
+        title: "HP Collections",
+        desc: "View installment payments made to HP accounts.",
+        icon: DollarSign,
+        color: "bg-emerald-500/10 text-emerald-500",
+        emoji: "💰",
+        endpoint: "/api/reports/type/hp-collection"
+    },
+    {
         title: "Salary Reports",
         desc: "View detail wise report of your employees salary payments.",
         icon: Users,
         color: "bg-purple-500/10 text-purple-500",
         emoji: "👤",
         endpoint: "/api/reports/salary"
-    },
-    {
-        title: "Attendance Report",
-        desc: "View detail wise report of your employees that how they attend.",
-        icon: ClipboardCheck,
-        color: "bg-orange-500/10 text-orange-500",
-        emoji: "📝",
-        endpoint: "/api/reports/type/attendance"
     },
     {
         title: "Expenses Reports",
@@ -76,22 +95,6 @@ const reportCategories: ReportCategory[] = [
         endpoint: "/api/reports/expenses"
     },
     {
-        title: "Returns Reports",
-        desc: "View detail wise report of the return orders of your business.",
-        icon: RefreshCcw,
-        color: "bg-yellow-500/10 text-yellow-500",
-        emoji: "↩️",
-        endpoint: "/api/reports/type/returns"
-    },
-    {
-        title: "Sales Person Report",
-        desc: "View detail wise report of Sales Person's sales.",
-        icon: UserSquare2,
-        color: "bg-indigo-500/10 text-indigo-500",
-        emoji: "💼",
-        endpoint: "/api/reports/type/sales-person"
-    },
-    {
         title: "Repair Profit Report",
         desc: "View detail wise report of Repair Profits.",
         icon: PenTool,
@@ -100,76 +103,52 @@ const reportCategories: ReportCategory[] = [
         endpoint: "/api/reports/repair-profit"
     },
     {
-        title: "Sales Type Reports",
-        desc: "View detail wise report of sales types.",
-        icon: PieChart,
-        color: "bg-teal-500/10 text-teal-500",
-        emoji: "🎯",
-        endpoint: "/api/reports/type/sales-type"
-    },
-    {
-        title: "Supplier Reports",
-        desc: "View Supplier wise report of products.",
-        icon: Truck,
-        color: "bg-orange-600/10 text-orange-600",
-        emoji: "🚚",
-        endpoint: "/api/reports/suppliers"
-    },
-    {
-        title: "Sales X Supplier Reports",
-        desc: "View Supplier wise Sale report.",
-        icon: Scale,
-        color: "bg-blue-600/10 text-blue-600",
-        emoji: "⚖️",
-        endpoint: "/api/reports/type/sales-person"
-    },
-    {
-        title: "Sales Credit Reports",
-        desc: "View detail wise report of sales reports.",
-        icon: FileText,
-        color: "bg-cyan-600/10 text-cyan-600",
-        emoji: "📄",
-        endpoint: "/api/reports/type/sales-credit"
-    },
-    {
-        title: "Cus Credit Reports",
-        desc: "View customer wise report of credit reports.",
-        icon: CreditCard,
-        color: "bg-violet-500/10 text-violet-500",
-        emoji: "💳",
-        endpoint: "/api/reports/type/cus-credit"
-    },
-    {
-        title: "Sales Ref Reports",
-        desc: "View ref-wise sales reports.",
-        icon: UserCheck,
-        color: "bg-emerald-600/10 text-emerald-600",
-        emoji: "🤝",
-        endpoint: "/api/reports/type/sales-ref"
-    },
-    {
-        title: "Cus Payment Report",
-        desc: "View customer payment reports.",
-        icon: Banknote,
-        color: "bg-slate-500/10 text-slate-500",
-        emoji: "💵",
-        endpoint: "/api/reports/type/cus-payment"
-    },
-    {
-        title: "Vehicle Load Report",
-        desc: "View customer payment reports.",
-        icon: Container,
-        color: "bg-sky-500/10 text-sky-500",
-        emoji: "🚛",
-        endpoint: "/api/reports/vehicle-load"
+        title: "Stock Movement",
+        desc: "Audit trail of all inventory IN/OUT activities.",
+        icon: Activity,
+        color: "bg-orange-500/10 text-orange-500",
+        emoji: "🔄",
+        endpoint: "/api/reports/type/stock-movement"
     }
 ];
+
+
 
 const Reports = () => {
     const theme = useStore(state => state.theme);
     const [selectedReport, setSelectedReport] = useState<ReportCategory | null>(null);
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+    const reportRef = useRef<HTMLDivElement>(null);
+
+    const handlePrint = useReactToPrint({
+        contentRef: reportRef,
+        documentTitle: selectedReport?.title || 'Report'
+    });
+
+    const downloadCSV = () => {
+        if (!reportData) return;
+        let rows: any[] = [];
+        if (Array.isArray(reportData)) rows = reportData;
+        else if (reportData.repairs) rows = reportData.repairs;
+        else rows = [reportData];
+
+        if (rows.length === 0) return;
+
+        const columns = Object.keys(rows[0]);
+        const header = columns.join(',');
+        const csvRows = rows.map((row: any) =>
+            columns.map(col => `"${String(row[col] ?? '').replace(/"/g, '""')}"`).join(',')
+        );
+        const csvContent = [header, ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${selectedReport?.title || 'Report'}_${new Date().toISOString().split('T')[0]}.csv`);
+        link.click();
+    };
+
 
     const fetchReportData = async (category: ReportCategory) => {
         setLoading(true);
@@ -301,7 +280,11 @@ const Reports = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <button className="p-3 bg-text/5 hover:bg-text/10 text-text rounded-2xl transition-all">
+                                    <button
+                                        onClick={downloadCSV}
+                                        title="Download CSV"
+                                        className="p-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-2xl transition-all"
+                                    >
                                         <Download size={20} />
                                     </button>
                                     <button
@@ -313,7 +296,7 @@ const Reports = () => {
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6">
+                            <div className="flex-1 overflow-y-auto p-6" ref={reportRef}>
                                 {loading ? (
                                     <div className="h-64 flex items-center justify-center">
                                         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -327,11 +310,21 @@ const Reports = () => {
                                 <span className="text-xs font-bold text-text-muted">
                                     Showing latest records as of {new Date().toLocaleString()}
                                 </span>
-                                <div className="flex items-center gap-2">
-                                    <button className="px-6 py-2.5 bg-primary text-white rounded-xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2">
-                                        <Download size={16} /> EXPORT PDF
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={downloadCSV}
+                                        className="px-6 py-2.5 bg-emerald-500 text-white rounded-xl font-black text-sm shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all flex items-center gap-2"
+                                    >
+                                        <Scale size={16} /> EXPORT EXCEL
+                                    </button>
+                                    <button
+                                        onClick={() => handlePrint()}
+                                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2"
+                                    >
+                                        <FileText size={16} /> PRINT PDF
                                     </button>
                                 </div>
+
                             </div>
                         </motion.div>
                     </div>
