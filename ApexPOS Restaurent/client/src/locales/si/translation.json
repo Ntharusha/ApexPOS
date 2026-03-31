@@ -1,0 +1,32 @@
+{
+    "sidebar": {
+        "dashboard": "උපකරණ පුවරුව",
+        "inventory": "තොග",
+        "retailPOS": "විකුණුම්",
+        "delivery": "බෙදාහැරීම්",
+        "salesHistory": "විකුණුම් ඉතිහාසය",
+        "categories": "වර්ග",
+        "repairs": "අලුත්වැඩියා",
+        "reload": "රීලෝඩ්",
+        "registration": "ලියාපදිංචි කිරීම",
+        "addJob": "නව රැකියාවක්",
+        "reports": "වාර්තා",
+        "notifications": "දැනුම්දීම්",
+        "hirePurchase": "වාරික ගෙවීම්",
+        "expenses": "වියදම්",
+        "language": "භාෂාව"
+    },
+    "pos": {
+        "searchProducts": "නම හෝ බාර්කෝඩ්...",
+        "cart": "වත්මන් බිල්පත",
+        "items": "අයිතම",
+        "subtotal": "මුළු එකතුව",
+        "vat": "වැට් බද්ද (18%)",
+        "sscl": "SSCL (2.5%)",
+        "discount": "වට්ටම්",
+        "total": "මුළු මුදල",
+        "checkout": "ගෙවන්න",
+        "holdBill": "බිල්පත රඳවන්න",
+        "clearCart": "මකන්න"
+    }
+}
