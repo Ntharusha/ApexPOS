@@ -107,7 +107,7 @@ const Header = () => {
                         onClick={() => setUserMenuOpen(o => !o)}
                         className="flex items-center gap-2.5 hover:bg-white/5 rounded-2xl px-3 py-2 transition-all group"
                     >
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center text-white text-xs font-black shadow-md">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-black shadow-lg">
                             {initials}
                         </div>
                         <div className="hidden sm:block text-left">
@@ -147,7 +147,7 @@ const Header = () => {
                                         </button>
                                         <button
                                             onClick={handleLogout}
-                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-red-500 transition-all text-sm font-black"
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-red-500 transition-all text-sm font-black uppercase tracking-tight"
                                         >
                                             <LogOut size={16} /> Sign Out
                                         </button>

@@ -27,8 +27,16 @@ const Layout = () => {
     }, [fetchNotifications]);
 
     return (
-        <div className="flex bg-background min-h-screen text-text font-sans overflow-hidden transition-colors duration-300">
+        <div className="flex bg-background min-h-screen text-text font-sans overflow-hidden transition-colors duration-500 relative">
             <SyncEngine />
+            
+            {/* Aurora Background Elements */}
+            <div className="aurora-bg">
+                <div className="aurora-element top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary" />
+                <div className="aurora-element bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary" />
+                <div className="aurora-element top-[20%] right-[10%] w-[20%] h-[20%] bg-emerald-500/20" />
+            </div>
+
             <Sidebar />
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 <Header />

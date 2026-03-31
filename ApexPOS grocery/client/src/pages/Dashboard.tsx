@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { DollarSign, Package, Wrench, Truck, Activity, ArrowUpRight, AlertCircle, ShoppingBag, CheckSquare } from 'lucide-react';
+import { DollarSign, Activity, ArrowUpRight, ShoppingBag, CheckSquare, Package, Truck } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 const Dashboard = () => {
@@ -25,346 +25,153 @@ const Dashboard = () => {
 
     const fetchStats = () => {
         fetch('http://localhost:5000/api/dashboard/stats')
-            .then(res => {
-                if (!res.ok) throw new Error("Failed to fetch");
-                return res.json();
-            })
-            .then(data => {
-                setStats(data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Dashboard Fetch Error:", err);
-                setLoading(false);
-            });
+            .then(res => res.json())
+            .then(data => { setStats(data); setLoading(false); })
+            .catch(() => setLoading(false));
     };
 
     useEffect(() => {
         fetchStats();
-
-        // Fetch sales trend data
-        fetch('http://localhost:5000/api/dashboard/sales-trend')
-            .then(res => res.json())
-            .then(data => setSalesTrend(data))
-            .catch(err => console.error("Sales Trend Fetch Error:", err));
-
-        // Fetch recent activity
-        fetch('http://localhost:5000/api/dashboard/recent-activity')
-            .then(res => res.json())
-            .then(data => setRecentActivity(data))
-            .catch(err => console.error("Recent Activity Fetch Error:", err));
-
-        // Real-time updates via Socket.io
+        fetch('http://localhost:5000/api/dashboard/sales-trend').then(res => res.json()).then(setSalesTrend);
+        fetch('http://localhost:5000/api/dashboard/recent-activity').then(res => res.json()).then(setRecentActivity);
         const socket = io('http://localhost:5000');
-
-        socket.on('dashboardUpdate', () => {
-            console.log("Real-time update received!");
-            fetchStats();
-        });
-
-        return () => {
-            socket.disconnect();
-        };
+        socket.on('dashboardUpdate', fetchStats);
+        return () => { socket.disconnect(); };
     }, []);
 
-    if (loading) {
-        return <div className="p-10 text-center text-text-muted">Loading dashboard...</div>;
-    }
+    if (loading) return <div className="p-10 text-center text-text-muted italic">Initializing Analytics...</div>;
 
-    const COLORS = ['#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+    const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6'];
+    const CHART_TEXT_COLOR = theme === 'light' ? '#64748b' : '#94a3b8';
+    const CHART_GRID_COLOR = theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
 
     return (
-        <div className="space-y-6 pb-10">
-            <div className="flex justify-between items-end mb-2">
+        <div className="space-y-6 pb-10 relative">
+            <div className="flex justify-between items-end mb-4">
                 <div>
-                    <h1 className="text-3xl font-black text-text tracking-tight uppercase">
-                        Business Intelligence
-                    </h1>
-                    <p className="text-text-muted font-bold mt-1 uppercase tracking-widest text-[10px]">Real-time Performance Metrics</p>
+                    <h1 className="text-3xl font-black text-text tracking-tight uppercase">Intelligence Dashboard</h1>
+                    <p className="text-[10px] text-text-muted font-bold tracking-[0.2em] uppercase mt-1">Real-time Performance Metrics</p>
                 </div>
                 <div className="flex gap-2">
-                    <span className="px-3 py-1.5 glass text-[10px] font-black uppercase text-text rounded-lg flex items-center gap-2">
-                        <Activity size={14} className="text-primary animate-pulse" /> Live System Status
+                    <span className="px-4 py-2 glass rounded-xl text-[10px] font-black uppercase text-text flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" /> Live Status
                     </span>
                 </div>
             </div>
 
-            {/* Top Summary Cards - Sales Focused */}
+            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                    { title: 'Today\'s Sales', value: stats.dailySales, color: 'from-blue-500 to-indigo-500', icon: <DollarSign />, label: 'LKR' },
-                    { title: 'Weekly Sales', value: stats.weeklySales, color: 'from-emerald-500 to-teal-500', icon: <ShoppingBag />, label: 'LKR' },
-                    { title: 'Monthly Sales', value: stats.monthlySales, color: 'from-amber-500 to-orange-500', icon: <Activity />, label: 'LKR' },
-                ].map((card, index) => (
-                    <div key={index} className="glass-card p-8 relative overflow-hidden group">
-                        <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${card.color} opacity-10 blur-3xl rounded-bl-full transition-opacity group-hover:opacity-20`}></div>
-                        <div className="relative z-10">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`p-3 rounded-2xl bg-gradient-to-br ${card.color} shadow-lg shadow-black/10`}>
-                                    {React.cloneElement(card.icon as any, { size: 24, className: 'text-white' })}
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted">Performance</span>
+                    { title: "Today's Revenue", value: stats.dailySales, color: "from-emerald-500/20 to-emerald-600/5", icon: <DollarSign className="text-emerald-500"/> },
+                    { title: "Weekly Forecast", value: stats.weeklySales, color: "from-indigo-500/20 to-indigo-600/5", icon: <ShoppingBag className="text-indigo-500"/> },
+                    { title: "Monthly Growth", value: stats.monthlySales, color: "from-violet-500/20 to-violet-600/5", icon: <Activity className="text-violet-500"/> },
+                ].map((card, i) => (
+                    <div key={i} className={`glass-card p-8 bg-gradient-to-br ${card.color} border-white/5`}>
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-3 bg-background/50 rounded-2xl border border-white/5 shadow-inner">
+                                {card.icon}
                             </div>
-                            <p className="text-text-muted text-xs font-black uppercase tracking-widest mb-1">{card.title}</p>
-                            <h3 className="text-4xl font-black text-text tracking-tighter">
-                                <span className="text-base mr-1 font-bold text-text-muted">{card.label}</span>
-                                {card.value.toLocaleString()}
-                            </h3>
+                            <ArrowUpRight size={16} className="text-text-muted opacity-30" />
                         </div>
+                        <h3 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">{card.title}</h3>
+                        <p className="text-3xl font-black text-text font-mono tracking-tighter">LKR {card.value.toLocaleString()}</p>
                     </div>
                 ))}
             </div>
 
+            {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Sales Trend Chart */}
-                <div className="lg:col-span-2 glass-card p-8 min-h-[450px]">
-                    <div className="flex justify-between items-center mb-8">
-                        <div>
-                            <h3 className="text-xl font-black text-text uppercase tracking-tight">Revenue Stream</h3>
-                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">Last 7 Active Trading Days</p>
-                        </div>
-                        <div className="flex items-center gap-2 px-3 py-1 bg-text/5 rounded-lg">
-                            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                            <span className="text-[10px] font-bold text-text-muted uppercase">Live Feed</span>
-                        </div>
-                    </div>
-                    {salesTrend.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={320}>
+                <div className="lg:col-span-2 glass-card p-6 h-[450px] flex flex-col">
+                    <h2 className="text-lg font-black text-text uppercase tracking-tight mb-8">Sales Trajectory</h2>
+                    <div className="flex-1">
+                        <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={salesTrend}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_GRID_COLOR} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: CHART_TEXT_COLOR, fontSize: 10, fontWeight: 900}} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{fill: CHART_TEXT_COLOR, fontSize: 10, fontWeight: 900}} />
+                                <Tooltip contentStyle={{backgroundColor: 'var(--surface)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'}} />
+                                <Line type="monotone" dataKey="sales" stroke="url(#paint0_linear)" strokeWidth={4} dot={{r: 4, fill: '#10b981', strokeWidth: 0}} activeDot={{r: 8, strokeWidth: 0}} />
                                 <defs>
-                                    <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                                    <linearGradient id="paint0_linear" x1="0" y1="0" x2="1" y2="0">
+                                        <stop stopColor="#10b981" />
+                                        <stop offset="1" stopColor="#6366f1" />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'light' ? '#e2e8f0' : '#334155'} />
-                                <XAxis
-                                    dataKey="date"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    stroke={theme === 'light' ? '#64748b' : '#94a3b8'}
-                                    style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    stroke={theme === 'light' ? '#64748b' : '#94a3b8'}
-                                    style={{ fontSize: '10px', fontWeight: 'bold' }}
-                                    tickFormatter={(value) => `LKR ${(value / 1000).toFixed(0)}k`}
-                                />
-                                <Tooltip
-                                    cursor={{ stroke: 'var(--primary)', strokeWidth: 1 }}
-                                    contentStyle={{
-                                        backgroundColor: 'var(--surface)',
-                                        border: '1px solid var(--border, #334155)',
-                                        borderRadius: '16px',
-                                        color: 'var(--text)',
-                                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-                                        padding: '12px'
-                                    }}
-                                    itemStyle={{ color: 'var(--text)', fontWeight: 'bold' }}
-                                    formatter={(value: any) => [`LKR ${value.toLocaleString()}`, 'Total Sales']}
-                                />
-                                <Line
-                                    type="monotone"
-                                    dataKey="sales"
-                                    stroke={theme === 'light' ? '#2563eb' : '#38bdf8'}
-                                    strokeWidth={4}
-                                    dot={{ fill: theme === 'light' ? '#2563eb' : '#38bdf8', r: 6, strokeWidth: 2, stroke: 'var(--surface)' }}
-                                    activeDot={{ r: 8, strokeWidth: 0 }}
-                                    animationDuration={1500}
-                                />
                             </LineChart>
                         </ResponsiveContainer>
-                    ) : (
-                        <div className="flex items-center justify-center h-[320px] text-text-muted font-bold italic">
-                            Synthesizing trend data.......
-                        </div>
-                    )}
+                    </div>
                 </div>
 
-                {/* Brand performance Bar Chart */}
-                <div className="glass-card p-8">
-                    <div className="mb-8">
-                        <h3 className="text-xl font-black text-text uppercase tracking-tight">Market Share</h3>
-                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">Brand-wise Summary (This Month)</p>
+                <div className="glass-card p-6 flex flex-col">
+                    <h2 className="text-lg font-black text-text uppercase tracking-tight mb-6">Inventory Mix</h2>
+                    <div className="flex-1">
+                        <ResponsiveContainer width="100%" height={240}>
+                            <BarChart data={stats.brandSummary}>
+                                <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{fill: CHART_TEXT_COLOR, fontSize: 8, fontWeight: 900}} />
+                                <Tooltip contentStyle={{backgroundColor: 'var(--surface)', borderRadius: '1rem', border: 'none'}} />
+                                <Bar dataKey="count" radius={[10, 10, 0, 0]}>
+                                    {stats.brandSummary.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
-                    {stats.brandSummary.length > 0 ? (
-                        <div className="h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={stats.brandSummary} layout="vertical" margin={{ left: -20 }}>
-                                    <XAxis type="number" hide />
-                                    <YAxis
-                                        dataKey="name"
-                                        type="category"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        style={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', fill: 'var(--text)' }}
-                                    />
-                                    <Tooltip
-                                        cursor={{ fill: 'transparent' }}
-                                        contentStyle={{ backgroundColor: 'var(--surface)', borderRadius: '12px', border: 'none' }}
-                                    />
-                                    <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={24}>
-                                        {stats.brandSummary.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                    <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
+                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-text-muted">
+                            <span>Total Groups</span>
+                            <span className="text-text">{stats.brandSummary.length}</span>
                         </div>
-                    ) : (
-                        <div className="h-[300px] flex flex-col items-center justify-center text-text-muted bg-text/5 rounded-3xl border border-dashed border-text/10">
-                            <Activity size={40} className="mb-4 opacity-20" />
-                            <p className="font-bold text-xs uppercase tracking-widest">No brand data yet</p>
-                        </div>
-                    )}
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Low Stock Watchlist */}
-                <div className="glass-card p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <div>
-                            <h3 className="text-xl font-black text-text uppercase tracking-tight">Stock Depletion Watch</h3>
-                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">Critical Inventory Levels (&lt; 5 units)</p>
-                        </div>
-                        <div className="px-3 py-1 bg-red-500/10 rounded-lg">
-                            <span className="text-[10px] font-black text-red-500 uppercase">{stats.lowStockCount} Items</span>
-                        </div>
+            {/* Bottom Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Low Stock */}
+                <div className="glass-card p-6 border-red-500/10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                           <Package size={16}/> Stock Alerts
+                        </h2>
+                        <span className="px-2 py-0.5 bg-red-500/10 text-red-500 text-[10px] font-black rounded-lg">{stats.lowStockCount}</span>
                     </div>
-
-                    <div className="space-y-3">
-                        {stats.lowStockList.length > 0 ? stats.lowStockList.map((product: any, i) => (
-                            <div key={i} className={`flex items-center justify-between p-4 rounded-2xl ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/5 hover:border-red-500/30 transition-all group`}>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
-                                        <AlertCircle size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-black text-text leading-tight group-hover:text-red-500 transition-colors uppercase">{product.name}</p>
-                                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">{product.category}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="text-right">
-                                        <p className="text-lg font-black text-red-500 font-mono">{product.stock}</p>
-                                        <p className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em]">Remaining</p>
-                                    </div>
-                                    <button
-                                        onClick={async () => {
-                                            try {
-                                                await fetch('http://localhost:5000/api/notifications', {
-                                                    method: 'POST',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({
-                                                        title: 'Purchase Request',
-                                                        description: `High Priority: RESTOCK ${product.name} (Stock: ${product.stock}). Manual PO requested from Dashboard.`,
-                                                        type: 'Alert'
-                                                    })
-                                                });
-                                                alert(`PO Request sent for ${product.name}! Check notifications.`);
-                                            } catch (err) {
-                                                console.error(err);
-                                            }
-                                        }}
-                                        className="p-2 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-lg transition-all"
-                                        title="One-click PO Request"
-                                    >
-                                        <ShoppingBag size={14} />
-                                    </button>
-                                </div>
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                        {stats.lowStockList?.map((item: any, i: number) => (
+                            <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-red-500/5 border border-red-500/10">
+                                <span className="text-[10px] font-black text-text uppercase truncate pr-2">{item.name}</span>
+                                <span className="text-xs font-black text-red-500 font-mono italic">{item.stock}</span>
                             </div>
-                        )) : (
-                            <div className="py-12 flex flex-col items-center justify-center text-emerald-500 bg-emerald-500/5 rounded-3xl border border-dashed border-emerald-500/20">
-                                <CheckSquare size={32} className="mb-3" />
-                                <p className="font-black text-xs uppercase tracking-widest">Inventory is healthy</p>
-                            </div>
-                        )}
+                        ))}
                     </div>
                 </div>
 
-                {/* Expiry Sentinel Widget */}
-                <div className="glass-card p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <div>
-                            <h3 className="text-xl font-black text-text uppercase tracking-tight">Expiry Sentinel</h3>
-                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">Nearing Expiry (Next 30 Days)</p>
-                        </div>
-                        <div className="px-3 py-1 bg-amber-500/10 rounded-lg">
-                            <span className="text-[10px] font-black text-amber-500 uppercase">{(stats as any).expiringCount || 0} Items</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        {(stats as any).expiringList?.length > 0 ? (stats as any).expiringList.map((product: any, i: number) => {
-                            const earliestExpiry = product.batches?.reduce((min: any, b: any) => 
-                                !min || new Date(b.expiryDate) < new Date(min) ? b.expiryDate : min, null);
-                            
-                            return (
-                                <div key={i} className={`flex items-center justify-between p-4 rounded-2xl ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/5 hover:border-amber-500/30 transition-all group`}>
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-                                            <Package size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-black text-text leading-tight group-hover:text-amber-500 transition-colors uppercase truncate max-w-[120px]">{product.name}</p>
-                                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest leading-none">
-                                                Exp: {earliestExpiry ? new Date(earliestExpiry).toLocaleDateString() : 'N/A'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="px-2 py-1 bg-amber-500/10 text-amber-500 rounded text-[9px] font-black uppercase tracking-tighter">
-                                            Clearance
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        }) : (
-                            <div className="py-12 flex flex-col items-center justify-center text-blue-500 bg-blue-500/5 rounded-3xl border border-dashed border-blue-500/20">
-                                <Package size={32} className="mb-3 opacity-40" />
-                                <p className="font-black text-[10px] uppercase tracking-widest">No immediate expiries</p>
-                            </div>
-                        )}
+                {/* Logistics */}
+                <div className="glass-card p-6">
+                    <h2 className="text-sm font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <Truck size={16}/> Logistics Feed
+                    </h2>
+                    <div className="flex flex-col items-center justify-center h-[200px] opacity-20 italic text-[10px] font-black uppercase tracking-widest">
+                        {stats.activeDeliveries > 0 ? `${stats.activeDeliveries} Active Shipments` : 'No active fleet'}
                     </div>
                 </div>
 
-                {/* Combined Other Stats Card */}
-                <div className="glass-card p-8">
-                    <div className="mb-6">
-                        <h3 className="text-xl font-black text-text uppercase tracking-tight">Workflow Overview</h3>
-                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">Operational Pipeline Status</p>
+                {/* Expiry Sentinel */}
+                <div className="glass-card p-6 border-primary/10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                            <CheckSquare size={16}/> Expiry Sentinel
+                        </h2>
+                        <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded-lg">{stats.expiringCount}</span>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className={`p-6 rounded-[2rem] ${theme === 'light' ? 'bg-blue-50/50' : 'bg-blue-500/5'} border border-blue-500/10 flex flex-col items-center text-center`}>
-                            <Wrench size={32} className="text-blue-500 mb-3" />
-                            <h4 className="text-3xl font-black text-text tracking-tighter">{stats.pendingRepairs}</h4>
-                            <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-1">Pending Repairs</p>
-                        </div>
-                        <div className={`p-6 rounded-[2rem] ${theme === 'light' ? 'bg-purple-50/50' : 'bg-purple-500/5'} border border-purple-500/10 flex flex-col items-center text-center`}>
-                            <Truck size={32} className="text-purple-500 mb-3" />
-                            <h4 className="text-3xl font-black text-text tracking-tighter">{stats.activeDeliveries}</h4>
-                            <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mt-1">Out for Delivery</p>
-                        </div>
-                    </div>
-
-                    <div className="mt-8">
-                        <h4 className="text-xs font-black text-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
-                            Activity Pulse <div className="h-1 flex-1 bg-text/5 rounded-full"></div>
-                        </h4>
-                        <div className="space-y-4">
-                            {recentActivity.slice(0, 3).map((activity, i) => (
-                                <div key={i} className="flex items-center gap-3">
-                                    <div className="w-2 h-2 rounded-full bg-primary shadow-lg shadow-primary/50"></div>
-                                    <p className="text-xs font-bold text-text truncate flex-1">{activity.message}</p>
-                                    <span className="text-[8px] font-black text-text-muted uppercase">{new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                        {stats.expiringList?.map((item: any, i: number) => (
+                            <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-background/50 border border-white/5">
+                                <div className="flex flex-col min-w-0 pr-2">
+                                    <span className="text-[10px] font-black text-text uppercase truncate">{item.name}</span>
+                                    <span className="text-[8px] font-bold text-primary/50 uppercase tracking-tighter">Clearance Recommended</span>
                                 </div>
-                            ))}
-                        </div>
+                                <span className="text-[10px] font-black text-primary font-mono">{new Date(item.expiryDate).toLocaleDateString()}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

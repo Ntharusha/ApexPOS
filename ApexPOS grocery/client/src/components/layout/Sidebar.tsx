@@ -15,7 +15,6 @@ import { motion } from 'framer-motion';
 const menuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard', animation: 'hover-rotate' as const, group: 'Core' },
     { path: '/retail-pos', icon: ShoppingCart, label: 'Retail POS', animation: 'hover-scale' as const, group: 'Core' },
-    { path: '/hospitality', icon: UtensilsCrossed, label: 'Hospitality', animation: 'hover-rotate' as const, group: 'Core' },
     { path: '/inventory', icon: Package, label: 'Inventory', animation: 'hover-scale' as const, group: 'Core' },
 
     { path: '/categories', icon: Tags, label: 'Categories', animation: 'hover-scale' as const, group: 'Core' },
@@ -58,20 +57,20 @@ const Sidebar = () => {
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={`h-screen sticky top-0 left-0 ${theme === 'light'
                 ? 'bg-white border-r border-slate-100 shadow-lg'
-                : 'bg-[#0d1117] border-r border-white/8'
+                : 'bg-background border-r border-white/5'
                 } z-50 flex flex-col`}
         >
             {/* Logo */}
             <div className={`h-16 flex items-center justify-between px-4 border-b ${theme === 'light' ? 'border-slate-100' : 'border-white/8'} shrink-0`}>
                 <div className="overflow-hidden flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center text-white text-xs font-black shadow-md shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-black shadow-lg shrink-0">
                         AP
                     </div>
                     {sidebarOpen && (
                         <motion.span
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="font-black text-lg bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent whitespace-nowrap"
+                            className="font-black text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent whitespace-nowrap tracking-tighter"
                         >
                             ApexPOS
                         </motion.span>
@@ -151,13 +150,13 @@ const Sidebar = () => {
             {/* User Footer */}
             <div className={`p-3 border-t ${theme === 'light' ? 'border-slate-100' : 'border-white/8'} shrink-0`}>
                 <div className={`flex items-center gap-3 p-3 rounded-2xl ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-white/5'} transition-all`}>
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-black text-xs shadow-lg shrink-0">
                         {initials}
                     </div>
                     {sidebarOpen && (
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-text truncate leading-tight">{user?.name || 'Admin'}</p>
-                            <p className="text-[10px] text-primary font-bold uppercase tracking-widest truncate">{user?.role || 'Admin'}</p>
+                            <p className="text-sm font-black text-text truncate leading-tight uppercase tracking-tight">{user?.name || 'Admin'}</p>
+                            <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] truncate">{user?.role || 'Admin'}</p>
                         </div>
                     )}
                     {sidebarOpen && (
