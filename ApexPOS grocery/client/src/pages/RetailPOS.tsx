@@ -18,6 +18,7 @@ const RetailPOS = () => {
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
     const [weighingProduct, setWeighingProduct] = useState<Product | null>(null);
+    const [isCartOpen, setIsCartOpen] = useState(true);
 
     const PRODUCE_CATEGORIES = ['Vegetables', 'Fruits', 'Meat', 'Fish', 'Produce'];
     const { isOnline, offlineProducts, offlineCategories } = useStore();
@@ -102,16 +103,26 @@ const RetailPOS = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setSelectedCategory(cat)}
-                                className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all active:scale-95 ${selectedCategory === cat ? 'bg-primary text-white shadow-lg shadow-primary/25 translate-y-[-2px]' : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-text'}`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
+                    <div className="flex gap-2 items-center">
+                        <div className="flex-1 flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                            {categories.map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all active:scale-95 ${selectedCategory === cat ? 'bg-primary text-white shadow-lg shadow-primary/25 translate-y-[-2px]' : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-text'}`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            onClick={() => setIsCartOpen(!isCartOpen)}
+                            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-3 active:scale-95 ${isCartOpen ? 'bg-secondary text-white' : 'bg-primary text-white shadow-lg shadow-primary/20 animate-pulse'}`}
+                        >
+                            <ShoppingCart size={16} />
+                            {isCartOpen ? 'Hide Cart' : 'Show Cart'}
+                            {cart.length > 0 && <span className="w-5 h-5 bg-white text-black rounded-full flex items-center justify-center text-[10px]">{cart.length}</span>}
+                        </button>
                     </div>
                 </div>
 
@@ -153,55 +164,65 @@ const RetailPOS = () => {
                 </div>
             </div>
 
-            {/* Right: Cart */}
-            <div className="w-[420px] flex flex-col gap-6">
-                <div className="flex-1 glass-card p-6 flex flex-col overflow-hidden relative">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <ShoppingCart size={24} className="text-primary" />
-                            <h2 className="text-xl font-black text-text uppercase tracking-tight">Active Cart</h2>
-                        </div>
-                        <button onClick={clearCart} className="p-3 text-text-muted hover:text-red-500 rounded-2xl"><Trash2 size={20}/></button>
-                    </div>
+            {/* Right: Cart (Toggleable) */}
+            <AnimatePresence>
+                {isCartOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 100, width: 0 }}
+                        animate={{ opacity: 1, x: 0, width: 420 }}
+                        exit={{ opacity: 0, x: 100, width: 0 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        className="flex flex-col gap-6"
+                    >
+                        <div className="flex-1 glass-card p-6 flex flex-col overflow-hidden relative">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <ShoppingCart size={24} className="text-primary" />
+                                    <h2 className="text-xl font-black text-text uppercase tracking-tight">Active Cart</h2>
+                                </div>
+                                <button onClick={clearCart} className="p-3 text-text-muted hover:text-red-500 rounded-2xl"><Trash2 size={20}/></button>
+                            </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
-                        <AnimatePresence initial={false}>
-                            {cart.map((item) => (
-                                <motion.div key={item._id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 rounded-[1.5rem] bg-background/40 border border-white/5">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex-1 min-w-0 pr-2">
-                                            <p className="text-sm font-black text-text leading-tight uppercase truncate">{item.name}</p>
-                                        </div>
-                                        <p className="text-sm font-black text-primary font-mono">LKR {(item.price * item.quantity).toLocaleString()}</p>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center bg-background/50 rounded-xl p-1 border border-white/5">
-                                            <button onClick={() => updateQuantity(item._id, item.quantity - (PRODUCE_CATEGORIES.includes(item.category) ? 0.1 : 1))} className="p-1.5"><Minus size={14}/></button>
-                                            <span className="w-14 text-center text-xs font-black font-mono">{PRODUCE_CATEGORIES.includes(item.category) ? item.quantity.toFixed(3) : item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item._id, item.quantity + (PRODUCE_CATEGORIES.includes(item.category) ? 0.1 : 1))} className="p-1.5"><Plus size={14}/></button>
-                                        </div>
-                                        <button onClick={() => removeFromCart(item._id)} className="p-2 text-text-muted hover:text-red-500"><Trash2 size={16}/></button>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </div>
+                            <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar min-h-0">
+                                <AnimatePresence initial={false}>
+                                    {cart.map((item) => (
+                                        <motion.div key={item._id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 rounded-[1.5rem] bg-background/40 border border-white/5">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex-1 min-w-0 pr-2">
+                                                    <p className="text-sm font-black text-text leading-tight uppercase truncate">{item.name}</p>
+                                                </div>
+                                                <p className="text-sm font-black text-primary font-mono">LKR {(item.price * item.quantity).toLocaleString()}</p>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center bg-background/50 rounded-xl p-1 border border-white/5">
+                                                    <button onClick={() => updateQuantity(item._id, item.quantity - (PRODUCE_CATEGORIES.includes(item.category) ? 0.1 : 1))} className="p-1.5"><Minus size={14}/></button>
+                                                    <span className="w-14 text-center text-xs font-black font-mono">{PRODUCE_CATEGORIES.includes(item.category) ? item.quantity.toFixed(3) : item.quantity}</span>
+                                                    <button onClick={() => updateQuantity(item._id, item.quantity + (PRODUCE_CATEGORIES.includes(item.category) ? 0.1 : 1))} className="p-1.5"><Plus size={14}/></button>
+                                                </div>
+                                                <button onClick={() => removeFromCart(item._id)} className="p-2 text-text-muted hover:text-red-500"><Trash2 size={16}/></button>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </div>
 
-                    <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-black uppercase text-text-muted">Subtotal</span>
-                            <span className="font-black font-mono">LKR {subtotal.toLocaleString()}</span>
+                            <div className="mt-6 pt-6 border-t border-white/10 space-y-4 shrink-0">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase text-text-muted">Subtotal</span>
+                                    <span className="font-black font-mono">LKR {subtotal.toLocaleString()}</span>
+                                </div>
+                                <div className="pt-3 border-t border-white/10 flex justify-between items-center">
+                                    <span className="text-sm font-black uppercase">Grand Total</span>
+                                    <span className="text-2xl font-black text-gradient font-mono tracking-tighter">LKR {tax.grandTotal.toLocaleString()}</span>
+                                </div>
+                                <button disabled={cart.length === 0} onClick={() => setIsCheckoutOpen(true)} className="w-full py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] bg-gradient-to-br from-primary to-emerald-600 text-white shadow-2xl active:scale-95 disabled:opacity-30">
+                                    Secure Checkout
+                                </button>
+                            </div>
                         </div>
-                        <div className="pt-3 border-t border-white/10 flex justify-between items-center">
-                            <span className="text-sm font-black uppercase">Grand Total</span>
-                            <span className="text-2xl font-black text-gradient font-mono tracking-tighter">LKR {tax.grandTotal.toLocaleString()}</span>
-                        </div>
-                        <button disabled={cart.length === 0} onClick={() => setIsCheckoutOpen(true)} className="w-full py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] bg-gradient-to-br from-primary to-emerald-600 text-white shadow-2xl active:scale-95 disabled:opacity-30">
-                            Secure Checkout
-                        </button>
-                    </div>
-                </div>
-            </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <CheckoutModal
                 isOpen={isCheckoutOpen} onClose={() => setIsCheckoutOpen(false)} cart={cart} discount={discount} tax={tax}
@@ -212,13 +233,7 @@ const RetailPOS = () => {
                 isOpen={isWeightModalOpen} onClose={() => { setIsWeightModalOpen(false); setWeighingProduct(null); }}
                 product={weighingProduct} onConfirm={(w) => {
                     if (weighingProduct) {
-                        const { cart } = useStore.getState();
-                        const existing = cart.find(i => i._id === weighingProduct._id);
-                        if (existing) {
-                            useStore.setState({ cart: cart.map(i => i._id === weighingProduct._id ? { ...i, quantity: i.quantity + w } : i) });
-                        } else {
-                            addToCart({ ...weighingProduct, quantity: w } as any);
-                        }
+                        addToCart(weighingProduct, w);
                     }
                 }}
             />

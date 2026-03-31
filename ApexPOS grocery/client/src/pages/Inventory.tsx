@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, X, RefreshCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
+import api from '../api/axios';
 
 interface Product {
     _id?: string;
@@ -45,8 +46,7 @@ const Inventory = () => {
 
     const fetchCategories = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/categories');
-            const data = await res.json();
+            const data = await api.get<any[]>('/categories');
             setCategories(data);
         } catch (error) {
             console.error("Failed to fetch categories", error);
@@ -55,8 +55,7 @@ const Inventory = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/products');
-            const data = await res.json();
+            const data = await api.get<Product[]>('/products');
             setProducts(data);
             setLoading(false);
         } catch (error) {
@@ -67,32 +66,22 @@ const Inventory = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:5000/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            if (res.ok) {
-                await fetchProducts();
-                setIsModalOpen(false);
-                setFormData({ name: '', brand: '', price: 0, costPrice: 0, category: '', stock: 0, barcode: '', image: '' });
-                alert('Product added successfully!');
-            } else {
-                const error = await res.json();
-                alert(`Failed to add product: ${error.message}`);
-            }
-        } catch (error) {
+            await api.post('/products', formData);
+            await fetchProducts();
+            setIsModalOpen(false);
+            setFormData({ name: '', brand: '', price: 0, costPrice: 0, category: '', stock: 0, barcode: '', image: '' });
+            alert('Product added successfully!');
+        } catch (error: any) {
             console.error("Error saving product", error);
-            alert('Error saving product. Please try again.');
+            alert(`Error saving product: ${error.message}`);
         }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure?')) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/products/${id}`, { method: 'DELETE' });
-            if (res.ok) fetchProducts();
+            await api.delete(`/products/${id}`);
+            fetchProducts();
         } catch (error) {
             console.error("Delete failed", error);
         }
@@ -103,22 +92,14 @@ const Inventory = () => {
         if (!selectedProduct?._id) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/products/${selectedProduct._id}/refill`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ quantity: refillAmount })
-            });
-
-            if (res.ok) {
-                await fetchProducts();
-                setIsRefillModalOpen(false);
-                setRefillAmount(0);
-                setSelectedProduct(null);
-            } else {
-                alert('Failed to refill stock');
-            }
+            await api.patch(`/products/${selectedProduct._id}/refill`, { quantity: refillAmount });
+            await fetchProducts();
+            setIsRefillModalOpen(false);
+            setRefillAmount(0);
+            setSelectedProduct(null);
         } catch (error) {
             console.error("Refill error", error);
+            alert('Failed to refill stock');
         }
     };
 
