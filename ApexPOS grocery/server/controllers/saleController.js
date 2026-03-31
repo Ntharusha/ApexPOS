@@ -1,4 +1,4 @@
-const { Sale, Notification, StockMovement, Settings } = require('../models/AllModels');
+const { Sale, Notification, StockMovement, Settings, Customer } = require('../models/AllModels');
 const ProductModel = require('../models/Product');
 
 const { calculateSaleTax } = require('../utils/taxEngine');
@@ -7,7 +7,7 @@ const { calculateSaleTax } = require('../utils/taxEngine');
 exports.createSale = async (req, res) => {
     try {
         console.log("Processing Sale:", req.body);
-        const { items, discount = 0, payments = [], cashierName = 'Unknown', branchId = 'HQ' } = req.body;
+        const { items, discount = 0, payments = [], cashierName = 'Unknown', branchId = 'HQ', customerId = null, loyaltyDiscount = 0 } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items provided" });
@@ -60,6 +60,8 @@ exports.createSale = async (req, res) => {
             paymentStatus,
             cashierName,
             branchId,
+            customerId,
+            loyaltyDiscount,
             date: new Date()
         });
 
@@ -126,6 +128,24 @@ exports.createSale = async (req, res) => {
                     // Emit socket update for notifications
                     if (io) io.emit('notificationUpdate');
                 }
+            }
+        }
+
+        // 7. Process Loyalty Points (if customer is linked)
+        if (customerId) {
+            const customer = await Customer.findById(customerId);
+            if (customer) {
+                // Deduct used points
+                if (loyaltyDiscount > 0) {
+                    customer.loyaltyPoints -= Number(loyaltyDiscount);
+                }
+                
+                // Add new points (1% of grand total, rounded down)
+                const newPoints = Math.floor(taxes.grandTotal * 0.01);
+                customer.loyaltyPoints += newPoints;
+                
+                customer.totalPurchases += taxes.grandTotal;
+                await customer.save();
             }
         }
 

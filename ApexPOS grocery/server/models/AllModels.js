@@ -59,7 +59,9 @@ const saleSchema = new mongoose.Schema({
     paymentStatus: { type: String, enum: ['Paid', 'Partial', 'Unpaid'], default: 'Paid' },
     date: { type: Date, default: Date.now },
     cashierName: String,
-    branchId: { type: String, default: 'HQ' }
+    branchId: { type: String, default: 'HQ' },
+    customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
+    loyaltyDiscount: { type: Number, default: 0 }
 });
 
 const deliverySchema = new mongoose.Schema({

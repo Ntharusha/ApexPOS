@@ -13,7 +13,9 @@ const Dashboard = () => {
         lowStockCount: 0,
         lowStockList: [],
         brandSummary: [],
-        activeDeliveries: 0
+        activeDeliveries: 0,
+        expiringCount: 0,
+        expiringList: []
     });
 
     const [loading, setLoading] = useState(true);
@@ -221,7 +223,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Low Stock Watchlist */}
                 <div className="glass-card p-8">
                     <div className="flex justify-between items-center mb-6">
@@ -273,14 +275,58 @@ const Dashboard = () => {
                                     >
                                         <ShoppingBag size={14} />
                                     </button>
-
                                 </div>
-
                             </div>
                         )) : (
                             <div className="py-12 flex flex-col items-center justify-center text-emerald-500 bg-emerald-500/5 rounded-3xl border border-dashed border-emerald-500/20">
                                 <CheckSquare size={32} className="mb-3" />
                                 <p className="font-black text-xs uppercase tracking-widest">Inventory is healthy</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Expiry Sentinel Widget */}
+                <div className="glass-card p-8">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 className="text-xl font-black text-text uppercase tracking-tight">Expiry Sentinel</h3>
+                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">Nearing Expiry (Next 30 Days)</p>
+                        </div>
+                        <div className="px-3 py-1 bg-amber-500/10 rounded-lg">
+                            <span className="text-[10px] font-black text-amber-500 uppercase">{(stats as any).expiringCount || 0} Items</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {(stats as any).expiringList?.length > 0 ? (stats as any).expiringList.map((product: any, i: number) => {
+                            const earliestExpiry = product.batches?.reduce((min: any, b: any) => 
+                                !min || new Date(b.expiryDate) < new Date(min) ? b.expiryDate : min, null);
+                            
+                            return (
+                                <div key={i} className={`flex items-center justify-between p-4 rounded-2xl ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'} border border-text/5 hover:border-amber-500/30 transition-all group`}>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                                            <Package size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-text leading-tight group-hover:text-amber-500 transition-colors uppercase truncate max-w-[120px]">{product.name}</p>
+                                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest leading-none">
+                                                Exp: {earliestExpiry ? new Date(earliestExpiry).toLocaleDateString() : 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="px-2 py-1 bg-amber-500/10 text-amber-500 rounded text-[9px] font-black uppercase tracking-tighter">
+                                            Clearance
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }) : (
+                            <div className="py-12 flex flex-col items-center justify-center text-blue-500 bg-blue-500/5 rounded-3xl border border-dashed border-blue-500/20">
+                                <Package size={32} className="mb-3 opacity-40" />
+                                <p className="font-black text-[10px] uppercase tracking-widest">No immediate expiries</p>
                             </div>
                         )}
                     </div>

@@ -21,7 +21,8 @@ exports.getDashboardStats = async (req, res) => {
             totalEmployees,
             totalCustomers,
             activeDeliveriesCount,
-            lowStockCountTotal
+            lowStockCountTotal,
+            expiringCountResult
         ] = await Promise.all([
             // Sales today
             Sale.find({ date: { $gte: startOfDay } }).then(sales => sales.reduce((sum, s) => sum + s.totalAmount, 0)),
@@ -40,10 +41,16 @@ exports.getDashboardStats = async (req, res) => {
             // Deliveries
             Delivery.countDocuments({ status: { $in: ['Pending', 'In Transit'] } }),
             // Low stock count (using <= 5 as threshold)
-            Product.countDocuments({ stock: { $lte: 5 } })
+            Product.countDocuments({ stock: { $lte: 5 } }),
+            // Expiring products (batches expiring within 30 days)
+            Product.countDocuments({ 'batches.expiryDate': { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), $gte: new Date() } })
         ]);
 
         const lowStockItems = await Product.find({ stock: { $lte: 5 } }).limit(10).select('name stock category');
+        
+        const expiringItems = await Product.find({ 
+            'batches.expiryDate': { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), $gte: new Date() } 
+        }).limit(10).select('name batches category');
 
         // 2. Monthly Expenses
         const monthExpenses = await Expense.find({ date: { $gte: startOfMonth } });
@@ -89,7 +96,9 @@ exports.getDashboardStats = async (req, res) => {
             totalEmployees,
             totalBrands,
             totalCustomers,
-            totalExpensesMonth
+            totalExpensesMonth,
+            expiringCount: expiringCountResult,
+            expiringList: expiringItems
         });
     } catch (error) {
         console.error("Dashboard Error:", error);

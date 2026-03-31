@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware';
 export interface Product {
     _id: string;
     name: string;
+    name_si?: string;
+    name_ta?: string;
     price: number;
     category: string;
     stock: number;

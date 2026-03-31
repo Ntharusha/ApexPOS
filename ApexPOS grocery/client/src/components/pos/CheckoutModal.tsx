@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, Banknote, CreditCard, Smartphone, QrCode,
     Plus, Trash2, CheckCircle2, Printer, ChevronRight,
-    AlertCircle, Wallet
+    AlertCircle, Wallet, User, Star, Search
 } from 'lucide-react';
+import api from '../../api/axios';
 import { useReactToPrint } from 'react-to-print';
 import Receipt from '../common/Receipt';
 import { CartItem } from '../../store/useStore';
@@ -109,6 +110,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     const [isProcessing, setIsProcessing] = useState(false);
     const [saleComplete, setSaleComplete] = useState(false);
     const [saleId, setSaleId] = useState<string | null>(null);
+    const [customers, setCustomers] = useState<any[]>([]);
+    const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+    const [custSearch, setCustSearch] = useState('');
+    const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
     const receiptRef = useRef<HTMLDivElement>(null);
 
     const handlePrint = useReactToPrint({ contentRef: receiptRef });
@@ -147,7 +152,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         if (!isFullyPaid) return;
         setIsProcessing(true);
         try {
-            const id = await onSaleComplete(payments);
+            const id = await onSaleComplete(payments, selectedCustomer?._id, loyaltyDiscount);
             if (id) {
                 setSaleId(id);
                 setSaleComplete(true);
@@ -163,7 +168,33 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         onClose();
         setSaleComplete(false);
         setSaleId(null);
+        setSelectedCustomer(null);
+        setLoyaltyDiscount(0);
         setPayments([{ id: '1', method: 'Cash', amount: tax.grandTotal, reference: '' }]);
+    };
+
+    const searchCustomer = async () => {
+        if (!custSearch) return;
+        try {
+            const res = await api.get(`/customers?search=${custSearch}`);
+            setCustomers(res as any);
+        } catch (err) {
+            console.error("Customer search failed", err);
+        }
+    };
+
+    const applyLoyalty = () => {
+        if (!selectedCustomer) return;
+        const points = selectedCustomer.loyaltyPoints || 0;
+        const maxRedeemable = Math.min(points, tax.grandTotal - loyaltyDiscount);
+        if (maxRedeemable > 0) {
+            setLoyaltyDiscount(prev => prev + maxRedeemable);
+            // Update remaining payments if needed
+            setPayments(prev => {
+                const totalWithNewDiscount = tax.grandTotal - (loyaltyDiscount + maxRedeemable);
+                return prev.map((p, i) => i === 0 ? { ...p, amount: Math.max(0, totalWithNewDiscount) } : p);
+            });
+        }
     };
 
 
@@ -253,7 +284,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                                         <span className="text-white font-black text-xl">Grand Total</span>
                                         <span className="text-white font-black text-3xl font-mono tracking-tight">
                                             <span className="text-lg mr-1 text-gray-400">LKR</span>
-                                            {tax.grandTotal.toLocaleString()}
+                                            {(tax.grandTotal - loyaltyDiscount).toLocaleString()}
                                         </span>
                                     </div>
 
@@ -324,6 +355,77 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                                     </div>
                                 ) : (
                                     <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-5">
+                                        {/* Customer & Loyalty Section */}
+                                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Customer (Optional)</h3>
+                                                {selectedCustomer && (
+                                                    <button onClick={() => { setSelectedCustomer(null); setLoyaltyDiscount(0); }} className="text-[9px] font-black text-red-500 uppercase tracking-widest">Remove</button>
+                                                )}
+                                            </div>
+
+                                            {!selectedCustomer ? (
+                                                <div className="flex gap-2">
+                                                    <div className="relative flex-1">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                                                        <input 
+                                                            type="text"
+                                                            value={custSearch}
+                                                            onChange={e => setCustSearch(e.target.value)}
+                                                            onKeyDown={e => e.key === 'Enter' && searchCustomer()}
+                                                            placeholder="Search by phone or name..."
+                                                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-primary"
+                                                        />
+                                                    </div>
+                                                    <button onClick={searchCustomer} className="px-4 py-2 bg-white/10 rounded-xl text-[10px] font-black text-white hover:bg-white/20 transition-all">Search</button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-xl p-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                                                            <User size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-white">{selectedCustomer.name}</p>
+                                                            <p className="text-[10px] text-primary font-bold">{selectedCustomer.phone}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="flex items-center gap-1 text-amber-500 font-black text-sm">
+                                                            <Star size={14} fill="currentColor" /> {selectedCustomer.loyaltyPoints || 0}
+                                                        </div>
+                                                        <p className="text-[8px] text-gray-500 font-bold uppercase">Points Available</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {selectedCustomer && (selectedCustomer.loyaltyPoints || 0) > 0 && (
+                                                <button 
+                                                    onClick={applyLoyalty}
+                                                    disabled={loyaltyDiscount > 0}
+                                                    className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${loyaltyDiscount > 0 ? 'bg-emerald-500/20 text-emerald-500 cursor-default' : 'bg-amber-500 text-black hover:opacity-90'}`}
+                                                >
+                                                    <Star size={14} fill={loyaltyDiscount > 0 ? 'none' : 'currentColor'} />
+                                                    {loyaltyDiscount > 0 ? `LKR ${loyaltyDiscount.toLocaleString()} Points Applied` : 'Redeem All Points'}
+                                                </button>
+                                            )}
+
+                                            {customers.length > 0 && !selectedCustomer && (
+                                                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                                                    {customers.map((c: any) => (
+                                                        <button 
+                                                            key={c._id} 
+                                                            onClick={() => { setSelectedCustomer(c); setCustomers([]); }}
+                                                            className="w-full text-left p-2 rounded-lg hover:bg-white/10 text-xs text-gray-400 hover:text-white transition-all flex justify-between"
+                                                        >
+                                                            <span>{c.name} ({c.phone})</span>
+                                                            <span className="text-amber-500 font-bold">{c.loyaltyPoints || 0} pts</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Payment Methods</h3>
 
                                         {/* Method Selector */}

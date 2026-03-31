@@ -3,6 +3,7 @@ import { Search, ShoppingCart, Trash2, Plus, Minus, Tag, Zap, AlertCircle } from
 import { useStore, Product } from '../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import CheckoutModal from '../components/pos/CheckoutModal';
+import WeightInputModal from '../components/pos/WeightInputModal';
 import api from '../api/axios';
 import { Link } from 'react-router-dom';
 
@@ -18,6 +19,10 @@ const RetailPOS = () => {
     const [categories, setCategories] = useState<string[]>(['All']);
     const [discount, setDiscount] = useState<number>(0);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
+    const [weighingProduct, setWeighingProduct] = useState<Product | null>(null);
+
+    const PRODUCE_CATEGORIES = ['Vegetables', 'Fruits', 'Meat', 'Fish', 'Produce'];
 
 
 
@@ -119,17 +124,28 @@ const RetailPOS = () => {
 
     const filteredProducts = displayProducts.filter(product => {
         const pName = product.name || '';
+        const pNameSi = product.name_si || '';
+        const pNameTa = product.name_ta || '';
         const pBarcode = product.barcode || '';
+        const sTerm = searchTerm.toLowerCase();
+
         const matchesSearch =
-            pName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            pBarcode.toLowerCase().includes(searchTerm.toLowerCase());
+            pName.toLowerCase().includes(sTerm) ||
+            pNameSi.toLowerCase().includes(sTerm) ||
+            pNameTa.toLowerCase().includes(sTerm) ||
+            pBarcode.toLowerCase().includes(sTerm);
+
         const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
 
     // ─── Complete Sale (called by CheckoutModal) ───────────────────────────────
-    const handleCompleteSale = async (payments: { method: string; amount: number; reference?: string }[]): Promise<string | null> => {
+    const handleCompleteSale = async (
+        payments: { method: string; amount: number; reference?: string }[],
+        customerId?: string,
+        loyaltyDiscount?: number
+    ): Promise<string | null> => {
         if (user?.role === 'cashier' && !currentShift) {
             alert('Error: You must START A SHIFT before processing sales. Use the user menu in the header to start your shift.');
             return null;
@@ -148,6 +164,8 @@ const RetailPOS = () => {
             payments: payments.map(p => ({ method: p.method, amount: Number(p.amount), reference: p.reference })),
             cashierName: user?.name || 'Cashier',
             branchId: user?.branch_id || 'HQ',
+            customerId,
+            loyaltyDiscount,
             date: new Date().toISOString(),
         };
 
@@ -235,8 +253,14 @@ const RetailPOS = () => {
                                     whileHover={{ y: product.stock > 0 ? -4 : 0 }}
                                     whileTap={{ scale: product.stock > 0 ? 0.98 : 1 }}
                                     onClick={() => {
-                                        if (product.stock > 0) addToCart(product);
-                                        else alert("Item is Out of Stock!");
+                                        if (product.stock <= 0) return alert("Item is Out of Stock!");
+                                        
+                                        if (PRODUCE_CATEGORIES.includes(product.category)) {
+                                            setWeighingProduct(product);
+                                            setIsWeightModalOpen(true);
+                                        } else {
+                                            addToCart(product);
+                                        }
                                     }}
                                     className={`glass-card p-5 cursor-pointer transition-all relative overflow-hidden group border-2 ${product.stock > 0
                                         ? 'border-transparent hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10'
@@ -427,6 +451,27 @@ const RetailPOS = () => {
                 onClear={() => { clearCart(); setDiscount(0); }}
             />
 
+
+            {/* Weight Input Modal */}
+            <WeightInputModal
+                isOpen={isWeightModalOpen}
+                onClose={() => { setIsWeightModalOpen(false); setWeighingProduct(null); }}
+                product={weighingProduct}
+                onConfirm={(weight) => {
+                    if (weighingProduct) {
+                        // Custom addToCart logic for weighted items
+                        const { cart, addToCart } = useStore.getState();
+                        const existing = cart.find(i => i._id === weighingProduct._id);
+                        if (existing) {
+                            useStore.setState({
+                                cart: cart.map(i => i._id === weighingProduct._id ? { ...i, quantity: i.quantity + weight } : i)
+                            });
+                        } else {
+                            addToCart({ ...weighingProduct, quantity: weight } as any);
+                        }
+                    }
+                }}
+            />
 
         </div>
     );
