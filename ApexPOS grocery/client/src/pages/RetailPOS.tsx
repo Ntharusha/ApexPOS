@@ -24,6 +24,10 @@ const RetailPOS = () => {
     const { isOnline, offlineProducts, offlineCategories } = useStore();
 
     useEffect(() => {
+        console.log('🛒 Current Cart State:', cart);
+    }, [cart]);
+
+    useEffect(() => {
         if (isOnline) {
             api.get<any[]>('/categories')
                 .then(data => setCategories(['All', ...data.map(c => c.name)]))
@@ -103,8 +107,8 @@ const RetailPOS = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex gap-2 items-center">
-                        <div className="flex-1 flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                    <div className="flex gap-2 items-center min-w-0">
+                        <div className="flex-1 flex gap-2 overflow-x-auto pb-2 custom-scrollbar min-w-0">
                             {categories.map(cat => (
                                 <button
                                     key={cat}
@@ -117,7 +121,7 @@ const RetailPOS = () => {
                         </div>
                         <button
                             onClick={() => setIsCartOpen(!isCartOpen)}
-                            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-3 active:scale-95 ${isCartOpen ? 'bg-secondary text-white' : 'bg-primary text-white shadow-lg shadow-primary/20 animate-pulse'}`}
+                            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-3 active:scale-95 shrink-0 ${isCartOpen ? 'bg-secondary text-white' : 'bg-primary text-white shadow-lg shadow-primary/20 animate-pulse'}`}
                         >
                             <ShoppingCart size={16} />
                             {isCartOpen ? 'Hide Cart' : 'Show Cart'}
@@ -136,6 +140,7 @@ const RetailPOS = () => {
                                     key={product._id}
                                     whileHover={{ y: product.stock > 0 ? -4 : 0 }}
                                     onClick={() => {
+                                        console.log('⚡ Adding Product to Cart:', product.name, product._id);
                                         if (product.stock <= 0) return alert("Out of stock!");
                                         if (PRODUCE_CATEGORIES.includes(product.category)) {
                                             setWeighingProduct(product);
@@ -168,11 +173,11 @@ const RetailPOS = () => {
             <AnimatePresence>
                 {isCartOpen && (
                     <motion.div
-                        initial={{ opacity: 0, x: 100, width: 0 }}
-                        animate={{ opacity: 1, x: 0, width: 420 }}
-                        exit={{ opacity: 0, x: 100, width: 0 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="flex flex-col gap-6"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                        className="w-[420px] flex flex-col gap-6 h-full shrink-0"
                     >
                         <div className="flex-1 glass-card p-6 flex flex-col overflow-hidden relative">
                             <div className="flex items-center justify-between mb-6">
@@ -185,7 +190,12 @@ const RetailPOS = () => {
 
                             <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar min-h-0">
                                 <AnimatePresence initial={false}>
-                                    {cart.map((item) => (
+                                    {cart.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full opacity-20 py-10">
+                                            <ShoppingCart size={64} className="mb-4" />
+                                            <p className="text-xs font-black uppercase tracking-[0.2em]">Cart is currently empty</p>
+                                        </div>
+                                    ) : cart.map((item) => (
                                         <motion.div key={item._id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 rounded-[1.5rem] bg-background/40 border border-white/5">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1 min-w-0 pr-2">
