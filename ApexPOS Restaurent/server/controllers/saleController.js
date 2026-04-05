@@ -1,4 +1,4 @@
-const { Sale, Notification, StockMovement, Settings } = require('../models/AllModels');
+const { Sale, Notification, StockMovement, Settings, Customer } = require('../models/AllModels');
 const ProductModel = require('../models/Product');
 
 const { calculateSaleTax } = require('../utils/taxEngine');
@@ -7,7 +7,7 @@ const { calculateSaleTax } = require('../utils/taxEngine');
 exports.createSale = async (req, res) => {
     try {
         console.log("Processing Sale:", req.body);
-        const { items, discount = 0, payments = [], cashierName = 'Unknown', branchId = 'HQ' } = req.body;
+        const { items, discount = 0, payments = [], cashierName = 'Unknown', branchId = 'HQ', customerId } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items provided" });
@@ -50,6 +50,7 @@ exports.createSale = async (req, res) => {
 
         // 4. Create Sale Record
         const sale = new Sale({
+            customerId: customerId || undefined,
             items: enrichedItems,
             totalAmount: taxes.subtotal,
             vatAmount: taxes.vatAmount,
@@ -65,6 +66,20 @@ exports.createSale = async (req, res) => {
 
 
         await sale.save();
+
+        // Update Customer stats if linked
+        if (customerId) {
+            try {
+                await Customer.findByIdAndUpdate(customerId, {
+                    $inc: {
+                        totalPurchases: taxes.grandTotal,
+                        loyaltyPoints: Math.floor(taxes.grandTotal / 100) // 1 point per 100 LKR
+                    }
+                });
+            } catch (e) {
+                console.warn('Failed to update customer stats:', e.message);
+            }
+        }
 
         // Notify Dashboard via Socket.io
         const io = req.app.get('io');

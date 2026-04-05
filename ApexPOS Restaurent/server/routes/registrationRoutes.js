@@ -11,6 +11,8 @@ router.delete('/staff/:id', registrationController.deleteStaff);
 // Customer routes
 router.get('/customers', registrationController.getCustomers);
 router.post('/customers', registrationController.createCustomer);
+router.get('/customers/:id/recommendations', registrationController.getCustomerRecommendations);
+router.get('/customers/:id/stats', registrationController.getCustomerStats);
 router.patch('/customers/:id', registrationController.updateCustomer);
 router.delete('/customers/:id', registrationController.deleteCustomer);
 

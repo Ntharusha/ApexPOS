@@ -82,6 +82,78 @@ exports.deleteCustomer = async (req, res) => {
     }
 };
 
+exports.getCustomerRecommendations = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const mongoose = require('mongoose');
+        const { Sale } = require('../models/AllModels');
+
+        const recommendations = await Sale.aggregate([
+            { $match: { customerId: new mongoose.Types.ObjectId(id) } },
+            { $unwind: "$items" },
+            { $group: {
+                _id: "$items.productId",
+                name: { $first: "$items.name" },
+                price: { $first: "$items.price" },
+                count: { $sum: 1 },
+                totalQty: { $sum: "$items.quantity" },
+                lastOrdered: { $max: "$date" }
+            }},
+            { $sort: { count: -1 } },
+            { $limit: 5 }
+        ]);
+
+        res.json(recommendations);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getCustomerStats = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const mongoose = require('mongoose');
+        const { Sale } = require('../models/AllModels');
+
+        const stats = await Sale.aggregate([
+            { $match: { customerId: new mongoose.Types.ObjectId(id) } },
+            { $group: {
+                _id: null,
+                totalSpend: { $sum: "$grandTotal" },
+                visitCount: { $sum: 1 },
+                avgOrderValue: { $avg: "$grandTotal" },
+                lastVisit: { $max: "$date" },
+                firstVisit: { $min: "$date" }
+            }}
+        ]);
+
+        const result = stats[0] || {
+            totalSpend: 0,
+            visitCount: 0,
+            avgOrderValue: 0,
+            lastVisit: null,
+            firstVisit: null
+        };
+
+        // Calculate loyalty tier
+        let tier = 'New';
+        if (result.visitCount >= 50 || result.totalSpend >= 500000) tier = 'Platinum';
+        else if (result.visitCount >= 20 || result.totalSpend >= 200000) tier = 'Gold';
+        else if (result.visitCount >= 10 || result.totalSpend >= 100000) tier = 'Silver';
+        else if (result.visitCount >= 3) tier = 'Bronze';
+
+        // Get recent orders (last 5)
+        const recentOrders = await Sale.find({ customerId: new mongoose.Types.ObjectId(id) })
+            .sort({ date: -1 })
+            .limit(5)
+            .select('date grandTotal items.name items.quantity');
+
+        res.json({ ...result, tier, recentOrders });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // ============ SUPPLIERS ============
 exports.getSuppliers = async (req, res) => {
     try {

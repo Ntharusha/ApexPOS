@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Trash2, Plus, Minus, Tag, Zap, AlertCircle } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, Plus, Minus, Tag, Zap, AlertCircle, UserCircle, X } from 'lucide-react';
 import { useStore, Product } from '../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import CheckoutModal from '../components/pos/CheckoutModal';
+import CustomerCRMPanel from '../components/pos/CustomerCRMPanel';
 import api from '../api/axios';
 import { Link } from 'react-router-dom';
 
@@ -18,6 +19,8 @@ const RetailPOS = () => {
     const [categories, setCategories] = useState<string[]>(['All']);
     const [discount, setDiscount] = useState<number>(0);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [isCRMOpen, setIsCRMOpen] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
 
 
 
@@ -148,6 +151,7 @@ const RetailPOS = () => {
             payments: payments.map(p => ({ method: p.method, amount: Number(p.amount), reference: p.reference })),
             cashierName: user?.name || 'Cashier',
             branchId: user?.branch_id || 'HQ',
+            customerId: selectedCustomer?._id || undefined,
             date: new Date().toISOString(),
         };
 
@@ -290,6 +294,32 @@ const RetailPOS = () => {
                     </button>
                 </div>
 
+                {/* Customer CRM Badge */}
+                <div className={`px-4 py-3 border-b border-text/10 shrink-0 ${selectedCustomer ? (theme === 'light' ? 'bg-violet-50' : 'bg-violet-500/5') : ''}`}>
+                    {selectedCustomer ? (
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-black text-xs shrink-0">
+                                {selectedCustomer.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-black text-text truncate">{selectedCustomer.name}</p>
+                                <p className="text-[10px] text-violet-500 font-bold">{selectedCustomer.loyaltyPoints || 0} loyalty pts</p>
+                            </div>
+                            <button onClick={() => setSelectedCustomer(null)} className="p-1.5 rounded-lg hover:bg-text/10 text-text-muted hover:text-red-400 transition-all">
+                                <X size={14} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setIsCRMOpen(true)}
+                            className={`w-full flex items-center gap-3 p-2.5 rounded-xl border border-dashed ${theme === 'light' ? 'border-slate-300 hover:border-violet-400 hover:bg-violet-50' : 'border-white/10 hover:border-violet-500/30 hover:bg-violet-500/5'} transition-all group`}
+                        >
+                            <UserCircle size={20} className="text-text-muted group-hover:text-violet-500 transition-colors" />
+                            <span className="text-xs font-bold text-text-muted group-hover:text-violet-500 transition-colors">Link Customer Profile</span>
+                        </button>
+                    )}
+                </div>
+
                 {/* Cart Items */}
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
                     <AnimatePresence>
@@ -424,7 +454,34 @@ const RetailPOS = () => {
                 cashierName={user?.name || 'Cashier'}
                 settings={settings}
                 onSaleComplete={handleCompleteSale}
-                onClear={() => { clearCart(); setDiscount(0); }}
+                onClear={() => { clearCart(); setDiscount(0); setSelectedCustomer(null); }}
+            />
+
+            {/* ── Customer CRM Panel ──────────────────────────────────────── */}
+            <CustomerCRMPanel
+                isOpen={isCRMOpen}
+                onClose={() => setIsCRMOpen(false)}
+                selectedCustomer={selectedCustomer}
+                onSelectCustomer={(customer) => {
+                    setSelectedCustomer(customer);
+                    if (customer) setIsCRMOpen(false);
+                }}
+                onAddRecommendation={(productId, name, price) => {
+                    // Try to find the product in loaded products for full data
+                    const product = products.find(p => p._id === productId);
+                    if (product) {
+                        addToCart(product);
+                    } else {
+                        // Fallback: add with minimal data
+                        addToCart({
+                            _id: productId,
+                            name,
+                            price,
+                            category: '',
+                            stock: 999,
+                        });
+                    }
+                }}
             />
 
 
