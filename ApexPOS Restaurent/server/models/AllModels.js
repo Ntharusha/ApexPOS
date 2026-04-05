@@ -37,6 +37,7 @@ const hpSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const saleSchema = new mongoose.Schema({
+    customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
     items: [{
         productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
         name: String,
