@@ -46,6 +46,7 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/shifts', require('./routes/shiftRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/hospitality', hospitalityRoutes);
+app.use('/api/qr', require('./routes/qrRoutes'));
 
 
 
