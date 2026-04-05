@@ -1,10 +1,11 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard, ShoppingCart, Package, Truck, History,
-    Tags, Wrench, Smartphone, Users, PlusCircle, FileText,
-    Bell, CreditCard, DollarSign, LogOut, ChevronLeft, ChevronRight,
-    ShieldCheck, Settings, UtensilsCrossed
+    LayoutDashboard, ShoppingCart, Package, History,
+    Tags, Users, FileText,
+    Bell, DollarSign, LogOut, ChevronLeft, ChevronRight,
+    ShieldCheck, Settings, UtensilsCrossed, MonitorPlay,
+    ChefHat, Heart
 } from 'lucide-react';
 
 
@@ -13,21 +14,20 @@ import { useStore } from '../../store/useStore';
 import { motion } from 'framer-motion';
 
 const menuItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard', animation: 'hover-rotate' as const, group: 'Core' },
-    { path: '/retail-pos', icon: ShoppingCart, label: 'Retail POS', animation: 'hover-scale' as const, group: 'Core' },
-    { path: '/hospitality', icon: UtensilsCrossed, label: 'Hospitality', animation: 'hover-rotate' as const, group: 'Core' },
-    { path: '/inventory', icon: Package, label: 'Inventory', animation: 'hover-scale' as const, group: 'Core' },
+    { path: '/', icon: LayoutDashboard, label: 'Dashboard', animation: 'hover-rotate' as const, group: 'Overview' },
 
-    { path: '/categories', icon: Tags, label: 'Categories', animation: 'hover-scale' as const, group: 'Core' },
-    { path: '/sales', icon: History, label: 'Sales History', animation: 'hover-rotate' as const, group: 'Core' },
-    { path: '/delivery', icon: Truck, label: 'Delivery', animation: 'hover-scale' as const, group: 'Service' },
-    { path: '/repairs', icon: Wrench, label: 'Repairs', animation: 'hover-rotate' as const, group: 'Service' },
-    { path: '/add-job', icon: PlusCircle, label: 'Add Job', animation: 'hover-rotate' as const, group: 'Service' },
-    { path: '/reload', icon: Smartphone, label: 'Reload', animation: 'pulse' as const, group: 'Service' },
-    { path: '/hp', icon: CreditCard, label: 'Hire Purchase', animation: 'hover-scale' as const, group: 'Finance' },
+    { path: '/retail-pos', icon: ShoppingCart, label: 'Order POS', animation: 'hover-scale' as const, group: 'Operations' },
+    { path: '/hospitality', icon: UtensilsCrossed, label: 'Tables', animation: 'hover-rotate' as const, group: 'Operations' },
+    { path: '/kds', icon: MonitorPlay, label: 'Kitchen Display', animation: 'hover-scale' as const, group: 'Operations' },
+
+    { path: '/inventory', icon: ChefHat, label: 'Menu Items', animation: 'hover-scale' as const, group: 'Management' },
+    { path: '/categories', icon: Tags, label: 'Categories', animation: 'hover-scale' as const, group: 'Management' },
+    { path: '/sales', icon: History, label: 'Sales History', animation: 'hover-rotate' as const, group: 'Management' },
+
     { path: '/expenses', icon: DollarSign, label: 'Expenses', animation: 'bounce' as const, group: 'Finance' },
     { path: '/reports', icon: FileText, label: 'Reports', animation: 'hover-scale' as const, group: 'Finance' },
-    { path: '/registration', icon: Users, label: 'Registration', animation: 'hover-scale' as const, group: 'Admin' },
+
+    { path: '/registration', icon: Heart, label: 'Customers', animation: 'hover-scale' as const, group: 'Admin' },
     { path: '/staff', icon: ShieldCheck, label: 'Staff & Auth', animation: 'hover-scale' as const, group: 'Admin' },
     { path: '/notifications', icon: Bell, label: 'Notifications', animation: 'pulse' as const, group: 'Admin' },
     { path: '/settings', icon: Settings, label: 'Settings', animation: 'hover-rotate' as const, group: 'Admin' },
@@ -35,8 +35,9 @@ const menuItems = [
 
 
 const groupLabels: Record<string, string> = {
-    Core: '🏪 Core',
-    Service: '🔧 Service',
+    Overview: '📊 Overview',
+    Operations: '🍽️ Operations',
+    Management: '📋 Management',
     Finance: '💰 Finance',
     Admin: '⚙️ Admin',
 };
@@ -49,7 +50,7 @@ const Sidebar = () => {
     const initials = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'A';
 
     // Group menu items
-    const groups = ['Core', 'Service', 'Finance', 'Admin'];
+    const groups = ['Overview', 'Operations', 'Management', 'Finance', 'Admin'];
 
     return (
         <motion.div
