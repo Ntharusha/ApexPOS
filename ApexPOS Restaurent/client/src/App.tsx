@@ -27,6 +27,8 @@ import Notifications from './pages/Notifications';
 import StaffManagement from './pages/StaffManagement';
 import Settings from './pages/Settings';
 import TableManagement from './pages/TableManagement';
+import QROrder from './pages/QROrder';
+import KDS from './pages/KDS';
 
 
 
@@ -43,6 +45,8 @@ function App() {
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={<Login />} />
+                <Route path="/qrmenu/:tableId" element={<QROrder />} />
+                <Route path="/kds" element={<KDS />} />
 
                 <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<Layout />}>

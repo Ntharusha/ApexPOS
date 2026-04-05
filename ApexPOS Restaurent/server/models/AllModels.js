@@ -178,23 +178,27 @@ const tableSchema = new mongoose.Schema({
     capacity: Number,
     status: { type: String, enum: ['Available', 'Occupied', 'Reserved', 'Bill Requested'], default: 'Available' },
     currentOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+    activeSessionId: { type: String }, // To secure QR ordering per seating session
     branchId: { type: String, default: 'HQ' }
 }, { timestamps: true });
 
 const orderSchema = new mongoose.Schema({
     tableId: { type: mongoose.Schema.Types.ObjectId, ref: 'Table' },
+    orderType: { type: String, enum: ['Dine-In', 'Takeaway', 'QR-Order'], default: 'Dine-In' },
+    status: { type: String, enum: ['Pending', 'Preparing', 'Ready', 'Completed', 'Cancelled'], default: 'Pending' },
     items: [{
         productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
         name: String,
         price: Number,
         quantity: Number,
-        status: { type: String, enum: ['Pending', 'Sent', 'Served', 'Cancelled'], default: 'Pending' },
+        status: { type: String, enum: ['Pending', 'Sent', 'Preparing', 'Ready', 'Served', 'Cancelled'], default: 'Pending' },
         kotPrinted: { type: Boolean, default: false },
         notes: String
     }],
     totalAmount: Number,
     isPaid: { type: Boolean, default: false },
     cashierName: String,
+    customerSessionId: String, // Matches table activeSessionId
     branchId: { type: String, default: 'HQ' }
 }, { timestamps: true });
 
