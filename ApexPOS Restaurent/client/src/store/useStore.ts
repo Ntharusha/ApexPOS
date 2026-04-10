@@ -10,6 +10,9 @@ export interface Product {
     image?: string;
     barcode?: string;
     tax_category?: 'STANDARD' | 'ZERO_RATED' | 'EXEMPT';
+    allergens?: string[];
+    dietaryTags?: string[];
+    courseType?: string;
 }
 
 export interface CartItem extends Product {
@@ -40,6 +43,7 @@ interface AppState {
     removeFromCart: (productId: string) => void;
     updateQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;
+    setCart: (items: CartItem[]) => void;
 
     // Sync Engine
     pendingSales: any[];
@@ -112,6 +116,7 @@ export const useStore = create<AppState>()(
                 )
             })),
             clearCart: () => set({ cart: [] }),
+            setCart: (cart) => set({ cart }),
 
             pendingSales: [],
             isOnline: navigator.onLine,

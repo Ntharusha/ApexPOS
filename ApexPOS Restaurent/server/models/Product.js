@@ -16,6 +16,10 @@ const productSchema = new mongoose.Schema({
     image: { type: String }, // URL or base64
     warranty: { type: String }, // e.g., "6 months"
     description: { type: String },
+    allergens: [{ type: String }], // e.g., 'Nuts', 'Dairy', 'Gluten'
+    dietaryTags: [{ type: String }], // e.g., 'Vegan', 'Vegetarian', 'Keto', 'Halal'
+    courseType: { type: String, enum: ['Starter', 'Main Course', 'Dessert', 'Beverage', 'Side', 'Other'], default: 'Other' },
+    preparationTime: { type: Number, default: 15 }, // Estimated prep time in minutes
     is_active: { type: Boolean, default: true },
     is_controlled_substance: { type: Boolean, default: false },
     branch_id: { type: String, default: 'HQ' },

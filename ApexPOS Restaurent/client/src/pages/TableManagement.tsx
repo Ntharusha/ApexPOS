@@ -5,6 +5,7 @@ import {
     AlertCircle, Plus, Search, UtensilsCrossed,
     Trash2, Printer, ChevronRight, X
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 
 interface Table {
@@ -16,6 +17,7 @@ interface Table {
 }
 
 const TableManagement = () => {
+    const navigate = useNavigate();
     const { theme, user } = useStore();
     const [tables, setTables] = useState<Table[]>([]);
     const [loading, setLoading] = useState(true);
@@ -75,7 +77,7 @@ const TableManagement = () => {
                 <div>
                     <h1 className="text-4xl font-black text-text tracking-tight flex items-center gap-3">
                         <UtensilsCrossed size={36} className="text-primary" />
-                        Hospitality Dashboard
+                        Restaurant Dashboard
                     </h1>
                     <p className="text-text-muted font-bold mt-1 uppercase tracking-widest text-xs">
                         Floor Plan & Table Management · {tables.length} Total Tables
@@ -170,6 +172,10 @@ const TableManagement = () => {
                                             </p>
                                         </div>
                                         <button
+                                            onClick={() => {
+                                                navigate('/retail-pos', { state: { table: selectedTable } });
+                                                setSelectedTable(null);
+                                            }}
                                             className="w-full bg-primary text-white py-5 rounded-3xl font-black text-lg hover:opacity-90 shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3"
                                         >
                                             <Plus size={24} /> Open New Order
@@ -183,12 +189,16 @@ const TableManagement = () => {
                                             <div className="space-y-3">
                                                 <p className="text-gray-500 italic text-sm">No items added to order yet...</p>
                                             </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <button className="bg-white/5 hover:bg-white/10 text-white p-5 rounded-3xl font-black transition-all flex flex-col items-center gap-2 border border-white/10">
+                                        </div>                                         <div className="grid grid-cols-2 gap-4">
+                                            <button 
+                                                onClick={() => {
+                                                    navigate('/retail-pos', { state: { table: selectedTable } });
+                                                    setSelectedTable(null);
+                                                }}
+                                                className="bg-white/5 hover:bg-white/10 text-white p-5 rounded-3xl font-black transition-all flex flex-col items-center gap-2 border border-white/10"
+                                            >
                                                 <UtensilsCrossed size={20} className="text-primary" />
-                                                <span className="text-xs uppercase tracking-widest">Update Items</span>
+                                                <span className="text-xs uppercase tracking-widest text-center mt-1">Update Items /<br/>Course Mgt</span>
                                             </button>
                                             <button className="bg-white/5 hover:bg-white/10 text-white p-5 rounded-3xl font-black transition-all flex flex-col items-center gap-2 border border-white/10">
                                                 <Printer size={20} className="text-blue-400" />
@@ -196,11 +206,20 @@ const TableManagement = () => {
                                             </button>
                                             <button className="bg-white/5 hover:bg-white/10 text-white p-5 rounded-3xl font-black transition-all flex flex-col items-center gap-2 border border-white/10">
                                                 <Users size={20} className="text-amber-400" />
-                                                <span className="text-xs uppercase tracking-widest">Move Table</span>
+                                                <span className="text-xs uppercase tracking-widest text-center mt-1">Move /<br/>Merge</span>
                                             </button>
-                                            <button className="bg-primary text-white p-5 rounded-3xl font-black transition-all flex flex-col items-center gap-2 shadow-lg shadow-primary/20">
-                                                <Printer size={20} />
-                                                <span className="text-xs uppercase tracking-widest">Bill & Checkout</span>
+                                            <button className="bg-white/5 hover:bg-white/10 text-white p-5 rounded-3xl font-black transition-all flex flex-col items-center gap-2 border border-white/10">
+                                                <History size={20} className="text-purple-400" />
+                                                <span className="text-xs uppercase tracking-widest">Split Bill</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    navigate('/retail-pos', { state: { table: selectedTable, autoOpenCheckout: true } });
+                                                    setSelectedTable(null);
+                                                }}
+                                                className="bg-primary text-white p-5 rounded-3xl font-black transition-all flex flex-col items-center gap-2 shadow-lg shadow-primary/20 col-span-2"
+                                            >
+                                                <CheckCircle2 size={20} />
                                             </button>
                                         </div>
                                     </div>

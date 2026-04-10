@@ -12,11 +12,17 @@ export interface ReceiptProps {
     payments?: Array<{ method: string; amount: number }>;
     cashierName?: string;
     settings?: any;
+    tableNumber?: string;
+    orderType?: string;
 }
 
 
 const Receipt = forwardRef<HTMLDivElement, ReceiptProps>((props, ref) => {
-    const { saleId, items, total, discount, date, vatAmount = 0, ssclAmount = 0, grandTotal, payments = [], cashierName = 'Cashier', settings } = props;
+    const { 
+        saleId, items, total, discount, date, vatAmount = 0, 
+        ssclAmount = 0, grandTotal, payments = [], 
+        cashierName = 'Cashier', settings, tableNumber, orderType 
+    } = props;
 
     const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const finalTotal = grandTotal ?? (subtotal + vatAmount + ssclAmount - discount);
@@ -46,6 +52,18 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>((props, ref) => {
                     <span>Cashier:</span>
                     <span>{cashierName}</span>
                 </div>
+                {tableNumber && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #ccc', marginTop: '4px', paddingTop: '4px' }}>
+                        <span style={{ fontWeight: 'bold' }}>TABLE:</span>
+                        <span style={{ fontWeight: 'bold' }}>{tableNumber}</span>
+                    </div>
+                )}
+                {orderType && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Type:</span>
+                        <span>{orderType}</span>
+                    </div>
+                )}
             </div>
 
             {/* Divider */}

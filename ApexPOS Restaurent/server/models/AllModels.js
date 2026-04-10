@@ -193,11 +193,22 @@ const orderSchema = new mongoose.Schema({
         price: Number,
         quantity: Number,
         status: { type: String, enum: ['Pending', 'Sent', 'Preparing', 'Ready', 'Served', 'Cancelled'], default: 'Pending' },
+        course: { type: String, enum: ['Starter', 'Main Course', 'Dessert', 'Beverage', 'Side', 'Other'], default: 'Other' },
+        firedAt: { type: Date },
         kotPrinted: { type: Boolean, default: false },
         notes: String
     }],
     totalAmount: Number,
     isPaid: { type: Boolean, default: false },
+    splitType: { type: String, enum: ['None', 'Equal', 'ByItem', 'CustomAmount'], default: 'None' },
+    splitAmounts: [{
+        guestNumber: Number,
+        amount: Number,
+        paymentMethod: String,
+        isPaid: { type: Boolean, default: false }
+    }],
+    mergedWithOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+    transferredFromTableId: { type: mongoose.Schema.Types.ObjectId, ref: 'Table' },
     cashierName: String,
     customerSessionId: String, // Matches table activeSessionId
     branchId: { type: String, default: 'HQ' }
