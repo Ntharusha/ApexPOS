@@ -35,6 +35,8 @@ interface CheckoutModalProps {
     onSaleComplete: (payments: PaymentLine[]) => Promise<string | null>;
     onClear?: () => void;
     settings?: any;
+    tableNumber?: string;
+    orderType?: string;
 }
 
 
@@ -98,7 +100,7 @@ const LankaQRDisplay: React.FC<{ amount: number }> = ({ amount }) => {
 
 // ─── Main CheckoutModal ───────────────────────────────────────────────────────
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
-    isOpen, onClose, cart, discount, tax, cashierName, onSaleComplete, onClear, settings
+    isOpen, onClose, cart, discount, tax, cashierName, onSaleComplete, onClear, settings, tableNumber, orderType
 }) => {
 
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Search, ShoppingCart, Trash2, Plus, Minus, Tag, Zap, 
     AlertCircle, UserCircle, X, UtensilsCrossed, ChefHat, 
-    ChevronLeft 
+    ChevronLeft, Printer 
 } from 'lucide-react';
 import { useStore, Product } from '../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -462,6 +462,15 @@ const RetailPOS = () => {
                     <div className="grid grid-cols-2 gap-3">
                         {activeTable && (
                             <button
+                                onClick={() => { if (cart.length > 0) setIsCheckoutOpen(true); }}
+                                className="col-span-2 bg-white/5 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-white/10 transition-all border border-white/10 mb-2"
+                            >
+                                <Printer size={18} className="text-blue-400" />
+                                <span className="text-[10px] uppercase tracking-widest">Print Pro-forma / Bill</span>
+                            </button>
+                        )}
+                        {activeTable && (
+                            <button
                                 onClick={handleSendToKitchen}
                                 disabled={cart.length === 0 || isKitchenSending}
                                 className="flex-1 bg-amber-500 text-white font-black py-4 rounded-2xl flex flex-col items-center justify-center gap-1 hover:opacity-90 shadow-xl shadow-amber-500/20 disabled:opacity-40"
@@ -492,6 +501,8 @@ const RetailPOS = () => {
                 settings={settings}
                 onSaleComplete={handleCompleteSale}
                 onClear={() => { clearCart(); setDiscount(0); setSelectedCustomer(null); if(activeTable) navigate('/hospitality'); }}
+                tableNumber={activeTable?.tableNumber}
+                orderType="Dine-In"
             />
 
             <CustomerCRMPanel
