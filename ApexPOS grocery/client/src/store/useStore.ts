@@ -29,6 +29,9 @@ interface AppState {
     setNotifications: (count: number) => void;
     fetchNotifications: () => Promise<void>;
 
+    posMode: 'grocery' | 'mobile' | 'restaurant' | null;
+    setPosMode: (mode: 'grocery' | 'mobile' | 'restaurant' | null) => void;
+
     isAuthenticated: boolean;
     login: (user: { id?: string; name: string; role: string; branch_id?: string }, token?: string) => void;
     logout: () => void;
@@ -72,6 +75,9 @@ export const useStore = create<AppState>()(
             isAuthenticated: false,
             notifications: 0,
             currentShift: null,
+            posMode: null,
+
+            setPosMode: (mode) => set({ posMode: mode }),
 
             setNotifications: (count) => set({ notifications: count }),
 
@@ -189,7 +195,8 @@ export const useStore = create<AppState>()(
                 offlineProducts: state.offlineProducts,
                 offlineCategories: state.offlineCategories,
                 syncStatus: state.syncStatus,
-                lastSync: state.lastSync
+                lastSync: state.lastSync,
+                posMode: state.posMode
             }),
 
         }

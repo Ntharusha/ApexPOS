@@ -6,8 +6,19 @@ import Login from './pages/Login';
 import { useStore } from './store/useStore';
 import Inventory from './pages/Inventory';
 
-// Protected Route Component
+// Protected Route Component (requires both Auth and Mode selection)
 const ProtectedRoute = () => {
+    const isAuthenticated = useStore(state => state.isAuthenticated);
+    const posMode = useStore(state => state.posMode);
+    
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    if (!posMode) return <Navigate to="/select-mode" replace />;
+    
+    return <Outlet />;
+};
+
+// Route that only requires Auth (for mode selection page)
+const AuthOnlyRoute = () => {
     const isAuthenticated = useStore(state => state.isAuthenticated);
     return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
@@ -21,6 +32,7 @@ import AddJob from './pages/AddJob';
 import Reload from './pages/Reload';
 import Registration from './pages/Registration';
 import Reports from './pages/Reports';
+import ModeSelection from './pages/ModeSelection';
 import HirePurchase from './pages/HirePurchase';
 import Expenses from './pages/Expenses';
 import Notifications from './pages/Notifications';
@@ -43,6 +55,10 @@ function App() {
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={<Login />} />
+
+                <Route element={<AuthOnlyRoute />}>
+                    <Route path="/select-mode" element={<ModeSelection />} />
+                </Route>
 
                 <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<Layout />}>

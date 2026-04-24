@@ -13,23 +13,24 @@ import { useStore } from '../../store/useStore';
 import { motion } from 'framer-motion';
 
 const menuItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard', animation: 'hover-rotate' as const, group: 'Core' },
-    { path: '/retail-pos', icon: ShoppingCart, label: 'Retail POS', animation: 'hover-scale' as const, group: 'Core' },
-    { path: '/inventory', icon: Package, label: 'Inventory', animation: 'hover-scale' as const, group: 'Core' },
+    { path: '/', icon: LayoutDashboard, label: 'Dashboard', animation: 'hover-rotate' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/retail-pos', icon: ShoppingCart, label: 'Retail POS', animation: 'hover-scale' as const, group: 'Core', modes: ['grocery', 'mobile'] },
+    { path: '/hospitality', icon: UtensilsCrossed, label: 'Restaurant POS', animation: 'hover-scale' as const, group: 'Core', modes: ['restaurant'] },
+    { path: '/inventory', icon: Package, label: 'Inventory', animation: 'hover-scale' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
 
-    { path: '/categories', icon: Tags, label: 'Categories', animation: 'hover-scale' as const, group: 'Core' },
-    { path: '/sales', icon: History, label: 'Sales History', animation: 'hover-rotate' as const, group: 'Core' },
-    { path: '/delivery', icon: Truck, label: 'Delivery', animation: 'hover-scale' as const, group: 'Service' },
-    { path: '/repairs', icon: Wrench, label: 'Repairs', animation: 'hover-rotate' as const, group: 'Service' },
-    { path: '/add-job', icon: PlusCircle, label: 'Add Job', animation: 'hover-rotate' as const, group: 'Service' },
-    { path: '/reload', icon: Smartphone, label: 'Reload', animation: 'pulse' as const, group: 'Service' },
-    { path: '/hp', icon: CreditCard, label: 'Hire Purchase', animation: 'hover-scale' as const, group: 'Finance' },
-    { path: '/expenses', icon: DollarSign, label: 'Expenses', animation: 'bounce' as const, group: 'Finance' },
-    { path: '/reports', icon: FileText, label: 'Reports', animation: 'hover-scale' as const, group: 'Finance' },
-    { path: '/registration', icon: Users, label: 'Registration', animation: 'hover-scale' as const, group: 'Admin' },
-    { path: '/staff', icon: ShieldCheck, label: 'Staff & Auth', animation: 'hover-scale' as const, group: 'Admin' },
-    { path: '/notifications', icon: Bell, label: 'Notifications', animation: 'pulse' as const, group: 'Admin' },
-    { path: '/settings', icon: Settings, label: 'Settings', animation: 'hover-rotate' as const, group: 'Admin' },
+    { path: '/categories', icon: Tags, label: 'Categories', animation: 'hover-scale' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/sales', icon: History, label: 'Sales History', animation: 'hover-rotate' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/delivery', icon: Truck, label: 'Delivery', animation: 'hover-scale' as const, group: 'Service', modes: ['grocery', 'restaurant'] },
+    { path: '/repairs', icon: Wrench, label: 'Repairs', animation: 'hover-rotate' as const, group: 'Service', modes: ['mobile'] },
+    { path: '/add-job', icon: PlusCircle, label: 'Add Job', animation: 'hover-rotate' as const, group: 'Service', modes: ['mobile'] },
+    { path: '/reload', icon: Smartphone, label: 'Reload', animation: 'pulse' as const, group: 'Service', modes: ['mobile'] },
+    { path: '/hp', icon: CreditCard, label: 'Hire Purchase', animation: 'hover-scale' as const, group: 'Finance', modes: ['mobile'] },
+    { path: '/expenses', icon: DollarSign, label: 'Expenses', animation: 'bounce' as const, group: 'Finance', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/reports', icon: FileText, label: 'Reports', animation: 'hover-scale' as const, group: 'Finance', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/registration', icon: Users, label: 'Registration', animation: 'hover-scale' as const, group: 'Admin', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/staff', icon: ShieldCheck, label: 'Staff & Auth', animation: 'hover-scale' as const, group: 'Admin', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/notifications', icon: Bell, label: 'Notifications', animation: 'pulse' as const, group: 'Admin', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/settings', icon: Settings, label: 'Settings', animation: 'hover-rotate' as const, group: 'Admin', modes: ['grocery', 'mobile', 'restaurant'] },
 ];
 
 
@@ -41,10 +42,11 @@ const groupLabels: Record<string, string> = {
 };
 
 const Sidebar = () => {
-    const { sidebarOpen, toggleSidebar, theme, user, logout } = useStore();
+    const { sidebarOpen, toggleSidebar, theme, user, logout, posMode, setPosMode } = useStore();
     const navigate = useNavigate();
 
     const handleLogout = () => { logout(); navigate('/login'); };
+    const handleSwitchMode = () => { setPosMode(null); navigate('/select-mode'); };
     const initials = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'A';
 
     // Group menu items
@@ -87,7 +89,10 @@ const Sidebar = () => {
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar">
                 {groups.map(group => {
-                    const items = menuItems.filter(i => i.group === group);
+                    const items = menuItems.filter(i => i.group === group && (!posMode || i.modes.includes(posMode)));
+                    
+                    if (items.length === 0) return null;
+                    
                     return (
                         <div key={group} className="mb-2">
                             {sidebarOpen && (
@@ -148,15 +153,22 @@ const Sidebar = () => {
             </nav>
 
             {/* User Footer */}
-            <div className={`p-3 border-t ${theme === 'light' ? 'border-slate-100' : 'border-white/8'} shrink-0`}>
+            <div className={`p-3 border-t ${theme === 'light' ? 'border-slate-100' : 'border-white/8'} shrink-0 flex flex-col gap-2`}>
+                <button
+                    onClick={handleSwitchMode}
+                    className={`flex items-center justify-center gap-2 w-full p-2 rounded-xl border border-primary/20 text-primary hover:bg-primary/10 transition-all ${!sidebarOpen && 'hidden'}`}
+                >
+                    <LayoutDashboard size={14} />
+                    <span className="text-xs font-bold uppercase tracking-widest">Switch Mode</span>
+                </button>
                 <div className={`flex items-center gap-3 p-3 rounded-2xl ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-white/5'} transition-all`}>
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-black text-xs shadow-lg shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-black text-xs shadow-lg shrink-0 cursor-pointer" onClick={!sidebarOpen ? handleSwitchMode : undefined} title={!sidebarOpen ? "Switch Mode" : ""}>
                         {initials}
                     </div>
                     {sidebarOpen && (
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-black text-text truncate leading-tight uppercase tracking-tight">{user?.name || 'Admin'}</p>
-                            <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] truncate">{user?.role || 'Admin'}</p>
+                            <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] truncate">{posMode?.toUpperCase() || user?.role || 'Admin'}</p>
                         </div>
                     )}
                     {sidebarOpen && (
