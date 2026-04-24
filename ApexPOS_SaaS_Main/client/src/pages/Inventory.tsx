@@ -26,6 +26,7 @@ const Inventory = () => {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [refillAmount, setRefillAmount] = useState<number>(0);
     const theme = useStore(state => state.theme);
+    const posMode = useStore(state => state.posMode);
 
     // Form State
     const [formData, setFormData] = useState<Product>({
@@ -42,11 +43,11 @@ const Inventory = () => {
     useEffect(() => {
         fetchProducts();
         fetchCategories();
-    }, []);
+    }, [posMode]);
 
     const fetchCategories = async () => {
         try {
-            const data = await api.get<any[]>('/categories');
+            const data = await api.get<any[]>(`/categories?mode=${posMode}`);
             setCategories(data);
         } catch (error) {
             console.error("Failed to fetch categories", error);
@@ -55,7 +56,7 @@ const Inventory = () => {
 
     const fetchProducts = async () => {
         try {
-            const data = await api.get<Product[]>('/products');
+            const data = await api.get<Product[]>(`/products?mode=${posMode}`);
             setProducts(data);
             setLoading(false);
         } catch (error) {
@@ -66,7 +67,7 @@ const Inventory = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/products', formData);
+            await api.post('/products', { ...formData, business_type: posMode });
             await fetchProducts();
             setIsModalOpen(false);
             setFormData({ name: '', brand: '', price: 0, costPrice: 0, category: '', stock: 0, barcode: '', image: '' });

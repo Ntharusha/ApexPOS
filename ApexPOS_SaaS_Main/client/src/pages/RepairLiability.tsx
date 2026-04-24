@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '../api/axios';
 import { ShieldCheck, Smartphone, Camera, PenTool, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -110,6 +111,21 @@ const RepairLiability = () => {
 
                         <button 
                             disabled={!signature}
+                            onClick={async () => {
+                                try {
+                                    await api.post('/liability', {
+                                        customerName: 'Guest Customer',
+                                        deviceModel: 'Generic Device',
+                                        damagePoints: issues.map(i => ({ x: i.x, y: i.y, damageType: i.type })),
+                                        hasSignature: true
+                                    });
+                                    alert('Liability Report Locked & Saved Successfully!');
+                                    setIssues([]);
+                                    setSignature(false);
+                                } catch (error) {
+                                    alert('Failed to save liability report');
+                                }
+                            }}
                             className="w-full bg-secondary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(var(--color-secondary),0.3)] hover:opacity-90"
                         >
                             <CheckCircle2 size={18} /> Generate Immutable PDF

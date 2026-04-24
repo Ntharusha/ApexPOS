@@ -3,7 +3,6 @@ import { Search, ShoppingCart, Trash2, Plus, Minus, Tag, Zap, UtensilsCrossed, X
 import { useStore, Product } from '../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import CheckoutModal from '../components/pos/CheckoutModal';
-import WeightInputModal from '../components/pos/WeightInputModal';
 import api from '../api/axios';
 
 const RetailPOS = () => {
@@ -16,8 +15,11 @@ const RetailPOS = () => {
     const [categories, setCategories] = useState<string[]>(['All']);
     const [discount, setDiscount] = useState<number>(0);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-    const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
-    const [weighingProduct, setWeighingProduct] = useState<Product | null>(null);
+    
+    // Advanced Item Options
+    const [selectedProductForOptions, setSelectedProductForOptions] = useState<Product | null>(null);
+    const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
+    
     const [isCartOpen, setIsCartOpen] = useState(cart.length > 0);
     const previousCartLength = useRef(cart.length);
 
@@ -50,7 +52,7 @@ const RetailPOS = () => {
             setProducts(offlineProducts);
             setLoading(false);
         }
-    }, [isOnline, offlineProducts, offlineCategories]);
+    }, [isOnline, offlineProducts, offlineCategories, posMode]);
 
     const activeVatRate = settings?.vatEnabled ? (settings?.vatRate ?? 0.18) : 0;
     const activeSsclRate = settings?.ssclEnabled ? (settings?.ssclRate ?? 0.025) : 0;
@@ -76,7 +78,8 @@ const RetailPOS = () => {
         const s = searchTerm.toLowerCase();
         const matchesSearch = (product.name?.toLowerCase().includes(s) || product.name_si?.toLowerCase().includes(s) || product.name_ta?.toLowerCase().includes(s) || product.barcode?.toLowerCase().includes(s));
         const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-        return matchesSearch && matchesCategory;
+        const matchesMode = product.business_type === posMode;
+        return matchesSearch && matchesCategory && matchesMode;
     });
 
     const handleCompleteSale = async (payments: any[], customerId?: string, loyaltyDiscount?: number) => {
@@ -177,11 +180,16 @@ const RetailPOS = () => {
                                     key={product._id}
                                     whileHover={{ y: product.stock > 0 ? -4 : 0 }}
                                     onClick={() => {
-                                        console.log('⚡ Adding Product to Cart:', product.name, product._id);
                                         if (product.stock <= 0) return alert("Out of stock!");
-                                        if (PRODUCE_CATEGORIES.includes(product.category)) {
-                                            setWeighingProduct(product);
-                                            setIsWeightModalOpen(true);
+                                        
+                                        // Check if this product needs extra options (IMEI, Weight, Notes)
+                                        const needsIMEI = posMode === 'mobile' && (product.category === 'Smartphones' || product.category === 'Tablets');
+                                        const needsWeight = (product as any).unit_type === 'kg' || ['Vegetables', 'Fruits'].includes(product.category);
+                                        const needsNotes = posMode === 'restaurant';
+
+                                        if (needsIMEI || needsWeight || needsNotes) {
+                                            setSelectedProductForOptions(product);
+                                            setIsOptionsModalOpen(true);
                                         } else {
                                             addToCart(product);
                                         }
@@ -275,14 +283,120 @@ const RetailPOS = () => {
                 cashierName={user?.name || 'Cashier'} settings={settings} onSaleComplete={handleCompleteSale} onClear={() => { clearCart(); setDiscount(0); }}
             />
 
-            <WeightInputModal
-                isOpen={isWeightModalOpen} onClose={() => { setIsWeightModalOpen(false); setWeighingProduct(null); }}
-                product={weighingProduct} onConfirm={(w) => {
-                    if (weighingProduct) {
-                        addToCart(weighingProduct, w);
+
+            {/* Advanced Item Options Modal */}
+            <ItemOptionsModal
+                isOpen={isOptionsModalOpen}
+                onClose={() => setIsOptionsModalOpen(false)}
+                product={selectedProductForOptions}
+                onConfirm={(metadata) => {
+                    if (selectedProductForOptions) {
+                        const quantity = metadata.weight || 1;
+                        addToCart({
+                            ...selectedProductForOptions,
+                            serialNumber: metadata.imei,
+                            weight: metadata.weight,
+                            notes: metadata.notes
+                        }, quantity);
                     }
+                    setIsOptionsModalOpen(false);
                 }}
+                mode={posMode || 'grocery'}
             />
+        </div>
+    );
+};
+
+// --- Item Options Modal Component ---
+const ItemOptionsModal = ({ isOpen, onClose, product, onConfirm, mode }: any) => {
+    const [imei, setImei] = useState('');
+    const [weight, setWeight] = useState('');
+    const [notes, setNotes] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            setImei('');
+            setWeight('');
+            setNotes('');
+        }
+    }, [isOpen]);
+
+    if (!isOpen || !product) return null;
+
+    const needsIMEI = mode === 'mobile' && (product.category === 'Smartphones' || product.category === 'Tablets');
+    const needsWeight = product.unit_type === 'kg' || ['Vegetables', 'Fruits'].includes(product.category);
+    const needsNotes = mode === 'restaurant';
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="bg-[#0f172a] border border-white/10 rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl p-8"
+            >
+                <div className="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 className="text-2xl font-black text-white">{product.name}</h3>
+                        <p className="text-primary font-bold text-sm">Add Item Options</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl text-gray-400">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="space-y-6">
+                    {needsIMEI && (
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-2">IMEI / Serial Number</label>
+                            <input
+                                autoFocus
+                                type="text"
+                                placeholder="Scan or enter IMEI..."
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold focus:border-primary focus:outline-none transition-all"
+                                value={imei}
+                                onChange={(e) => setImei(e.target.value)}
+                            />
+                        </div>
+                    )}
+
+                    {needsWeight && (
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-2">Weight (KG)</label>
+                            <div className="flex gap-3">
+                                <input
+                                    autoFocus={!needsIMEI}
+                                    type="number"
+                                    step="0.001"
+                                    placeholder="0.000"
+                                    className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold text-2xl focus:border-primary focus:outline-none transition-all font-mono"
+                                    value={weight}
+                                    onChange={(e) => setWeight(e.target.value)}
+                                />
+                                <div className="bg-primary/20 text-primary px-6 flex items-center justify-center rounded-2xl font-black text-xl">KG</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {needsNotes && (
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-2">Cooking Instructions</label>
+                            <textarea
+                                placeholder="Extra spicy, no onions, etc..."
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold focus:border-primary focus:outline-none transition-all h-24 resize-none"
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                            />
+                        </div>
+                    )}
+
+                    <button
+                        onClick={() => onConfirm({ imei, weight: parseFloat(weight), notes })}
+                        className="w-full bg-primary text-white py-5 rounded-3xl font-black text-lg hover:opacity-90 shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 mt-4"
+                    >
+                        Add to Cart <Plus size={20} />
+                    </button>
+                </div>
+            </motion.div>
         </div>
     );
 };

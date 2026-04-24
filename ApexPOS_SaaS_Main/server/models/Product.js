@@ -14,7 +14,9 @@ const productSchema = new mongoose.Schema({
     stock: { type: Number, default: 0 },
     minStock: { type: Number, default: 5 },
     image: { type: String }, // URL or base64
-    warranty: { type: String }, // e.g., "6 months"
+    warranty: { type: String }, // Human readable e.g., "6 months"
+    warranty_months: { type: Number, default: 0 },
+    unit_type: { type: String, enum: ['unit', 'kg', 'pc', 'g'], default: 'unit' },
     description: { type: String },
     is_active: { type: Boolean, default: true },
     is_controlled_substance: { type: Boolean, default: false },

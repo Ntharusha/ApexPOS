@@ -16,6 +16,10 @@ export interface Product {
 
 export interface CartItem extends Product {
     quantity: number;
+    weight?: number;
+    serialNumber?: string;
+    warranty_expiry?: string;
+    notes?: string;
 }
 
 interface AppState {

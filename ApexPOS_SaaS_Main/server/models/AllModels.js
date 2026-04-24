@@ -43,6 +43,10 @@ const saleSchema = new mongoose.Schema({
         name: String,
         price: Number,
         quantity: Number,
+        weight: { type: Number },
+        serialNumber: { type: String },
+        warranty_expiry: { type: Date },
+        notes: { type: String },
         tax_category: { type: String, enum: ['STANDARD', 'ZERO_RATED', 'EXEMPT'], default: 'STANDARD' },
         tax_amount: { type: Number, default: 0 },
         line_total: Number
@@ -201,6 +205,25 @@ const orderSchema = new mongoose.Schema({
     branchId: { type: String, default: 'HQ' }
 }, { timestamps: true });
 
+const tradeInSchema = new mongoose.Schema({
+    deviceBrand: String,
+    deviceModel: String,
+    condition: mongoose.Schema.Types.Mixed,
+    valuation: Number,
+    status: { type: String, enum: ['Pending', 'Accepted', 'Cancelled'], default: 'Pending' },
+    cashierName: String,
+    branchId: { type: String, default: 'HQ' }
+}, { timestamps: true });
+
+const liabilitySchema = new mongoose.Schema({
+    customerName: String,
+    deviceModel: String,
+    damagePoints: [{ x: Number, y: Number, damageType: String }],
+    hasSignature: Boolean,
+    status: { type: String, default: 'Locked' },
+    branchId: { type: String, default: 'HQ' }
+}, { timestamps: true });
+
 
 module.exports = {
     Repair: mongoose.model('Repair', repairSchema),
@@ -219,7 +242,9 @@ module.exports = {
     StockMovement: mongoose.model('StockMovement', stockMovementSchema),
     Settings: mongoose.model('Settings', settingsSchema),
     Table: mongoose.model('Table', tableSchema),
-    Order: mongoose.model('Order', orderSchema)
+    Order: mongoose.model('Order', orderSchema),
+    TradeIn: mongoose.model('TradeIn', tradeInSchema),
+    Liability: mongoose.model('Liability', liabilitySchema)
 };
 
 

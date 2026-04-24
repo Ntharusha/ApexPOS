@@ -1,22 +1,34 @@
-import React, { useState } from 'react';
-import { Award, Star, Users, TrendingUp, Gift, Search, Crown, ArrowRight, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import api from '../api/axios';
+import { Award, Star, Users, TrendingUp, Gift, Search, Crown, ArrowRight, ShieldCheck, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const LoyaltyProgram = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Mock Data
-    const stats = [
-        { title: 'Total Members', value: '4,289', icon: <Users size={24} className="text-blue-500" />, trend: '+12% this month' },
-        { title: 'Points Issued', value: '1.2M', icon: <Star size={24} className="text-yellow-500" />, trend: '+8% this month' },
-        { title: 'Points Redeemed', value: '840K', icon: <Gift size={24} className="text-emerald-500" />, trend: '+15% this month' },
-    ];
+    const [customers, setCustomers] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
 
-    const customers = [
-        { id: 'C001', name: 'Amal Perera', points: 12500, tier: 'Platinum', lastVisit: '2 hours ago' },
-        { id: 'C002', name: 'Nimali Silva', points: 8400, tier: 'Gold', lastVisit: '1 day ago' },
-        { id: 'C003', name: 'Kasun Kalhara', points: 3200, tier: 'Silver', lastVisit: '3 days ago' },
-        { id: 'C004', name: 'Devin Fernando', points: 1500, tier: 'Bronze', lastVisit: '5 days ago' },
+    const fetchCustomers = async () => {
+        try {
+            const res = await api.get('/customers');
+            setCustomers(res.data || []);
+            setLoading(false);
+        } catch (error) {
+            console.error('Failed to fetch loyalty customers', error);
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCustomers();
+    }, []);
+
+    const stats = [
+        { title: 'Total Members', value: customers.length.toLocaleString(), icon: <Users size={24} className="text-blue-500" />, trend: '+12% this month' },
+        { title: 'Points Issued', value: customers.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0).toLocaleString(), icon: <Star size={24} className="text-yellow-500" />, trend: '+8% this month' },
+        { title: 'Points Redeemed', value: '840K', icon: <Gift size={24} className="text-emerald-500" />, trend: '+15% this month' },
     ];
 
     const getTierColor = (tier: string) => {
@@ -40,7 +52,10 @@ const LoyaltyProgram = () => {
                         Customer Retention & Points Management
                     </p>
                 </div>
-                <button className="bg-yellow-500 hover:bg-yellow-400 text-yellow-900 px-6 py-3 rounded-2xl font-black flex items-center gap-2 transition-all shadow-lg shadow-yellow-500/20">
+                <button 
+                    onClick={() => setIsCampaignModalOpen(true)}
+                    className="bg-yellow-500 hover:bg-yellow-400 text-yellow-900 px-6 py-3 rounded-2xl font-black flex items-center gap-2 transition-all shadow-lg shadow-yellow-500/20"
+                >
                     <Gift size={20} /> Create Campaign
                 </button>
             </div>
@@ -96,8 +111,8 @@ const LoyaltyProgram = () => {
                                                 {c.tier}
                                             </span>
                                         </td>
-                                        <td className="py-4 font-mono font-bold text-yellow-500">{c.points.toLocaleString()}</td>
-                                        <td className="py-4 text-xs text-text-muted">{c.lastVisit}</td>
+                                        <td className="py-4 font-mono font-bold text-yellow-500">{(c.loyaltyPoints || 0).toLocaleString()}</td>
+                                        <td className="py-4 text-xs text-text-muted">{'Recently'}</td>
                                         <td className="py-4">
                                             <button className="text-primary opacity-0 group-hover:opacity-100 transition-opacity font-bold text-xs uppercase flex items-center gap-1">
                                                 View <ArrowRight size={14} />
@@ -137,6 +152,63 @@ const LoyaltyProgram = () => {
                     </div>
                 </div>
             </div>
+            {/* Create Campaign Modal */}
+            <CampaignModal 
+                isOpen={isCampaignModalOpen} 
+                onClose={() => setIsCampaignModalOpen(false)} 
+            />
+        </div>
+    );
+};
+
+const CampaignModal = ({ isOpen, onClose }: any) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="bg-[#0f172a] border border-white/10 rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl p-8"
+            >
+                <div className="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 className="text-2xl font-black text-white">Create Marketing Campaign</h2>
+                        <p className="text-primary font-bold text-sm">Boost customer retention with targeted offers</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl text-gray-400">
+                        <X size={24} />
+                    </button>
+                </div>
+
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-2">Campaign Type</label>
+                        <select className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold focus:border-primary focus:outline-none">
+                            <option>Email Blast (15% Off Discount)</option>
+                            <option>SMS Promotion (Double Points Weekend)</option>
+                            <option>Push Notification (New Menu Item)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-2">Target Audience</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button className="p-4 rounded-2xl bg-primary text-white font-black text-xs uppercase border border-primary">All Members</button>
+                            <button className="p-4 rounded-2xl bg-white/5 text-gray-400 font-black text-xs uppercase border border-white/10">Inactive (30+ days)</button>
+                            <button className="p-4 rounded-2xl bg-white/5 text-gray-400 font-black text-xs uppercase border border-white/10">Platinum Tier</button>
+                            <button className="p-4 rounded-2xl bg-white/5 text-gray-400 font-black text-xs uppercase border border-white/10">Recent High Spenders</button>
+                        </div>
+                    </div>
+
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl">
+                        <p className="text-xs font-bold text-yellow-500">Estimated Reach: <span className="font-black">4,289 Customers</span></p>
+                    </div>
+
+                    <button className="w-full bg-yellow-500 text-yellow-900 py-5 rounded-3xl font-black text-lg hover:opacity-90 shadow-xl shadow-yellow-500/20 transition-all flex items-center justify-center gap-3">
+                        Launch Campaign <ArrowRight size={20} />
+                    </button>
+                </div>
+            </motion.div>
         </div>
     );
 };

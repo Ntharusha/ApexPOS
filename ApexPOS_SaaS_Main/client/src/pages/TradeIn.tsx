@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '../api/axios';
 import { Smartphone, RefreshCw, CheckCircle2, ChevronRight, DollarSign, Calculator, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -131,7 +132,24 @@ const TradeIn = () => {
                             <button className="flex-1 bg-white/10 text-white py-4 rounded-2xl font-black transition-all hover:bg-white/20">
                                 Save Quote
                             </button>
-                            <button className="flex-1 bg-secondary text-white py-4 rounded-2xl font-black transition-all shadow-[0_0_20px_rgba(var(--color-secondary),0.3)] flex items-center justify-center gap-2">
+                            <button 
+                                onClick={async () => {
+                                    try {
+                                        await api.post('/tradeins', {
+                                            deviceBrand: selectedBrand,
+                                            deviceModel: selectedModel,
+                                            condition,
+                                            valuation: calculateValue(),
+                                            status: 'Accepted'
+                                        });
+                                        alert('Trade-In Accepted! Credit has been logged.');
+                                        setStep(1); setSelectedBrand(''); setSelectedModel(''); setCondition({});
+                                    } catch (error) {
+                                        alert('Failed to save trade-in');
+                                    }
+                                }}
+                                className="flex-1 bg-secondary text-white py-4 rounded-2xl font-black transition-all shadow-[0_0_20px_rgba(var(--color-secondary),0.3)] flex items-center justify-center gap-2"
+                            >
                                 <CheckCircle2 size={20} /> Accept & Credit
                             </button>
                         </div>
