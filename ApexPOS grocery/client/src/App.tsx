@@ -39,6 +39,9 @@ import Notifications from './pages/Notifications';
 import StaffManagement from './pages/StaffManagement';
 import Settings from './pages/Settings';
 import TableManagement from './pages/TableManagement';
+import LoyaltyProgram from './pages/LoyaltyProgram';
+import TradeIn from './pages/TradeIn';
+import KitchenDisplay from './pages/KitchenDisplay';
 
 
 
@@ -80,6 +83,9 @@ function App() {
                         <Route path="staff" element={<StaffManagement />} />
                         <Route path="settings" element={<Settings />} />
                         <Route path="hospitality" element={<TableManagement />} />
+                        <Route path="loyalty" element={<LoyaltyProgram />} />
+                        <Route path="trade-in" element={<TradeIn />} />
+                        <Route path="kds" element={<KitchenDisplay />} />
                     </Route>
 
 

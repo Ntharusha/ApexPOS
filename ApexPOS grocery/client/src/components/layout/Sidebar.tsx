@@ -4,7 +4,7 @@ import {
     LayoutDashboard, ShoppingCart, Package, Truck, History,
     Tags, Wrench, Smartphone, Users, PlusCircle, FileText,
     Bell, CreditCard, DollarSign, LogOut, ChevronLeft, ChevronRight,
-    ShieldCheck, Settings, UtensilsCrossed
+    ShieldCheck, Settings, UtensilsCrossed, Award, RefreshCw, ChefHat
 } from 'lucide-react';
 
 
@@ -15,12 +15,17 @@ import { motion } from 'framer-motion';
 const menuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard', animation: 'hover-rotate' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
     { path: '/retail-pos', icon: ShoppingCart, label: 'Retail POS', animation: 'hover-scale' as const, group: 'Core', modes: ['grocery', 'mobile'] },
+    { path: '/loyalty', icon: Award, label: 'Loyalty & Rewards', animation: 'pulse' as const, group: 'Core', modes: ['grocery'] },
+    
     { path: '/hospitality', icon: UtensilsCrossed, label: 'Restaurant POS', animation: 'hover-scale' as const, group: 'Core', modes: ['restaurant'] },
-    { path: '/inventory', icon: Package, label: 'Inventory', animation: 'hover-scale' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
+    { path: '/kds', icon: ChefHat, label: 'Kitchen Display', animation: 'bounce' as const, group: 'Core', modes: ['restaurant'] },
 
+    { path: '/inventory', icon: Package, label: 'Inventory', animation: 'hover-scale' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
     { path: '/categories', icon: Tags, label: 'Categories', animation: 'hover-scale' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
     { path: '/sales', icon: History, label: 'Sales History', animation: 'hover-rotate' as const, group: 'Core', modes: ['grocery', 'mobile', 'restaurant'] },
+    
     { path: '/delivery', icon: Truck, label: 'Delivery', animation: 'hover-scale' as const, group: 'Service', modes: ['grocery', 'restaurant'] },
+    { path: '/trade-in', icon: RefreshCw, label: 'Device Trade-In', animation: 'hover-rotate' as const, group: 'Service', modes: ['mobile'] },
     { path: '/repairs', icon: Wrench, label: 'Repairs', animation: 'hover-rotate' as const, group: 'Service', modes: ['mobile'] },
     { path: '/add-job', icon: PlusCircle, label: 'Add Job', animation: 'hover-rotate' as const, group: 'Service', modes: ['mobile'] },
     { path: '/reload', icon: Smartphone, label: 'Reload', animation: 'pulse' as const, group: 'Service', modes: ['mobile'] },
