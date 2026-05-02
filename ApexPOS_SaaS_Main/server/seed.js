@@ -2,7 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Product = require('./models/Product');
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/apexpos')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://apexpos:yqrqhN37S2dFBdw2@apexpos.rscehtw.mongodb.net/')
     .then(() => console.log('MongoDB Connected for Seeding'))
     .catch(err => console.log(err));
 
