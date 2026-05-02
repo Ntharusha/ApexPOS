@@ -89,3 +89,17 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+// Replace the hardcoded CORS origin with environment variable
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:5173'];
+
+const io = new Server(server, {
+    cors: {
+        origin: ALLOWED_ORIGINS,
+        methods: ["GET", "POST", "PATCH", "DELETE"]
+    }
+});
+
+app.use(cors({ origin: ALLOWED_ORIGINS }));
