@@ -4,7 +4,7 @@ const Product = require('./models/Product');
 
 async function check() {
     try {
-        await mongoose.connect('mongodb://localhost:27017/apexpos');
+        await mongoose.connect('mongodb+srv://apexpos:yqrqhN37S2dFBdw2@apexpos.rscehtw.mongodb.net/');
         const productCount = await Product.countDocuments();
         const categoryCount = await Category.countDocuments();
         console.log(`CHECK: Products: ${productCount}, Categories: ${categoryCount}`);

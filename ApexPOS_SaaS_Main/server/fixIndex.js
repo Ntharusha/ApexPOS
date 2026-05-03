@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 async function fixIndex() {
     try {
-        await mongoose.connect('mongodb://localhost:27017/apexpos');
+        await mongoose.connect('mongodb+srv://apexpos:yqrqhN37S2dFBdw2@apexpos.rscehtw.mongodb.net/');
         console.log('Connected to MongoDB...');
         
         const db = mongoose.connection.db;
