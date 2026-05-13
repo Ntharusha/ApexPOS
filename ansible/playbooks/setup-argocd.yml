@@ -34,9 +34,10 @@
       args:
         creates: /swapfile8g
 
-    - name: Create namespace for Argo CD
-      command: kubectl create namespace argocd
-      ignore_errors: yes
+    - name: Create namespace for Argo CD (idempotent)
+      shell: kubectl get namespace argocd || kubectl create namespace argocd
+      register: ns_result
+      changed_when: "'created' in ns_result.stdout"
 
     - name: Download Argo CD manifest to local disk
       get_url:
