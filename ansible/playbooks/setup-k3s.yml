@@ -12,13 +12,22 @@
       args:
         creates: /usr/local/bin/k3s
 
+    - name: Ensure k3s is started
+      systemd:
+        name: k3s
+        state: started
+        enabled: yes
+
     - name: Wait for k3s to be ready
       pause:
-        seconds: 15
+        seconds: 30
 
     - name: Check node status
       command: kubectl get nodes
       register: nodes_output
+      until: nodes_output.rc == 0
+      retries: 5
+      delay: 10
 
     - debug:
         var: nodes_output.stdout_lines
