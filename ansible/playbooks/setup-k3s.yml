@@ -3,6 +3,12 @@
   hosts: all
   become: yes
   tasks:
+    - name: Temporarily stop Jenkins to free up RAM for k3s
+      systemd:
+        name: jenkins
+        state: stopped
+      ignore_errors: yes
+
     - name: Update apt cache
       apt:
         update_cache: yes

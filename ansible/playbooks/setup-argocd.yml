@@ -45,7 +45,7 @@
         dest: /tmp/argocd-install.yaml
 
     - name: Install Argo CD from local file (Server-side apply)
-      command: kubectl apply --server-side -n argocd -f /tmp/argocd-install.yaml
+      command: kubectl apply --server-side --force-conflicts --request-timeout=10m -n argocd -f /tmp/argocd-install.yaml
 
     - name: Restart services
       become: yes
