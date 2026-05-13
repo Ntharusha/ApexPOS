@@ -1,0 +1,32 @@
+{
+    "sidebar": {
+        "dashboard": "முகப்புப் பலகை",
+        "inventory": "சரக்கு",
+        "retailPOS": "விற்பனை முனை",
+        "delivery": "விநியோகம்",
+        "salesHistory": "விற்பனை வரலாறு",
+        "categories": "பிரிவுகள்",
+        "repairs": "பழுதுபார்ப்பு",
+        "reload": "ரீலோட்",
+        "registration": "பதிவு",
+        "addJob": "வேலை சேர்",
+        "reports": "அறிக்கைகள்",
+        "notifications": "அறிவிப்புகள்",
+        "hirePurchase": "தவணை கொள்முதல்",
+        "expenses": "செலவுகள்",
+        "language": "மொழி"
+    },
+    "pos": {
+        "searchProducts": "பெயர் அல்லது பார்கோடு...",
+        "cart": "தற்போதைய பற்றுச்சீட்டு",
+        "items": "பொருட்கள்",
+        "subtotal": "உப-மொத்தம்",
+        "vat": "வற் வரி (18%)",
+        "sscl": "SSCL (2.5%)",
+        "discount": "கழிவு",
+        "total": "மொத்தம்",
+        "checkout": "செலுத்து",
+        "holdBill": "பட்டியலை நிறுத்து",
+        "clearCart": "அழி"
+    }
+}

@@ -1,0 +1,24 @@
+---
+- name: Install and Configure k3s
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install k3s
+      shell: curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Wait for k3s to be ready
+      pause:
+        seconds: 15
+
+    - name: Check node status
+      command: kubectl get nodes
+      register: nodes_output
+
+    - debug:
+        var: nodes_output.stdout_lines

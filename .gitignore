@@ -1,0 +1,13 @@
+# secrets
+*.pem
+.env
+
+# node
+node_modules/
+dist/
+build/
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.backup

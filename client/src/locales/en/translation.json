@@ -1,0 +1,32 @@
+{
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "inventory": "Inventory",
+        "retailPOS": "Retail POS",
+        "delivery": "Delivery",
+        "salesHistory": "Sales History",
+        "categories": "Categories",
+        "repairs": "Repairs",
+        "reload": "Reload",
+        "registration": "Registration",
+        "addJob": "Add Job",
+        "reports": "Reports",
+        "notifications": "Notifications",
+        "hirePurchase": "Hire Purchase",
+        "expenses": "Expenses",
+        "language": "Language"
+    },
+    "pos": {
+        "searchProducts": "Search by name or barcode...",
+        "cart": "Current Bill",
+        "items": "items",
+        "subtotal": "Subtotal",
+        "vat": "VAT (18%)",
+        "sscl": "SSCL (2.5%)",
+        "discount": "Discount",
+        "total": "Grand Total",
+        "checkout": "Pay Now",
+        "holdBill": "Hold Bill",
+        "clearCart": "Clear"
+    }
+}
