@@ -23,3 +23,8 @@ variable "admin_ip" {
   type        = string
   default     = "0.0.0.0/0"
 }
+
+variable "alert_email" {
+  description = "Email for CloudWatch alarm notifications"
+  type        = string
+}

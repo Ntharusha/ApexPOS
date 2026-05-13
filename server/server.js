@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 const productRoutes = require('./routes/productRoutes');
 const saleRoutes = require('./routes/saleRoutes');
 const repairRoutes = require('./routes/repairRoutes');
@@ -12,7 +15,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const registrationRoutes = require('./routes/registrationRoutes');
 const authRoutes = require('./routes/authRoutes');
-const hospitalityRoutes = require('./routes/hospitalityRoutes'); // Added this line
+const hospitalityRoutes = require('./routes/hospitalityRoutes');
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
@@ -20,6 +23,16 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
 
 const app = express();
 const server = http.createServer(app);
+
+// Security Middleware
+app.use(helmet());
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api/', limiter);
+
 const io = new Server(server, {
     cors: {
         origin: ALLOWED_ORIGINS,
@@ -52,19 +65,14 @@ app.use('/api/tradeins', require('./routes/tradeInRoutes'));
 app.use('/api/liability', require('./routes/liabilityRoutes'));
 app.use('/api/shifts', require('./routes/shiftRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
-app.use('/api/hospitality', hospitalityRoutes);
-
-
-
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/apexpos', {
-    serverSelectionTimeoutMS: 5000 // Timeout after 5s instead of 30s
+    serverSelectionTimeoutMS: 5000
 })
     .then(() => console.log('MongoDB Connected Successfully'))
     .catch(err => {
         console.error('MongoDB Connection Error:', err.message);
-        // process.exit(1); // Optional: Exit if DB fails
     });
 
 mongoose.connection.on('error', err => {

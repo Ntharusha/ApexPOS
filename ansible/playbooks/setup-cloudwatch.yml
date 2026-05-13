@@ -19,27 +19,10 @@
         state: directory
         mode: '0755'
 
-    - name: Create basic CloudWatch Agent config
-      copy:
+    - name: Deploy CloudWatch config (free tier limits)
+      template:
+        src: ../templates/cloudwatch-config.json.j2
         dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
-        content: |
-          {
-            "agent": {
-              "metrics_collection_interval": 60,
-              "run_as_user": "root"
-            },
-            "metrics": {
-              "metrics_collected": {
-                "mem": {
-                  "measurement": ["mem_used_percent"]
-                },
-                "disk": {
-                  "measurement": ["disk_used_percent"],
-                  "resources": ["/"]
-                }
-              }
-            }
-          }
 
     - name: Start CloudWatch Agent
       systemd:

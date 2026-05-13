@@ -132,6 +132,30 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+# IAM Role for CloudWatch Agent
+resource "aws_iam_role" "server" {
+  name = "apexpos-server-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch" {
+  role       = aws_iam_role.server.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_instance_profile" "server" {
+  name = "apexpos-server-profile"
+  role = aws_iam_role.server.name
+}
+
 # EC2 Instance - t3.micro (Free Tier Eligible)
 resource "aws_instance" "server" {
   ami                    = data.aws_ami.ubuntu.id
@@ -139,6 +163,7 @@ resource "aws_instance" "server" {
   key_name               = var.key_pair_name
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.server.id]
+  iam_instance_profile   = aws_iam_instance_profile.server.name
 
   # Free tier max EBS storage is 30GB gp2/gp3
   root_block_device {
@@ -159,4 +184,36 @@ resource "aws_eip" "server" {
   instance = aws_instance.server.id
   domain   = "vpc"
   tags     = { Name = "apexpos-server-eip" }
+}
+
+# CloudWatch Resources
+resource "aws_cloudwatch_log_group" "apexpos" {
+  name              = "/apexpos/server"
+  retention_in_days = 7
+}
+
+resource "aws_cloudwatch_metric_alarm" "high_cpu" {
+  alarm_name          = "apexpos-high-cpu"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 85
+  alarm_description   = "CPU usage is high"
+  dimensions = {
+    InstanceId = aws_instance.server.id
+  }
+  alarm_actions = [aws_sns_topic.alerts.arn]
+}
+
+resource "aws_sns_topic" "alerts" {
+  name = "apexpos-alerts"
+}
+
+resource "aws_sns_topic_subscription" "email" {
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = "email"
+  endpoint  = var.alert_email
 }
