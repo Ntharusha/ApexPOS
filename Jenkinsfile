@@ -3,11 +3,13 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDS = credentials('dockerhub-credentials')
-        DOCKER_IMAGE     = 'ntharusha/apexpos-backend'
+        DOCKER_IMAGE     = 'tharusha69/apexpos-backend'
+        DEPLOYMENT_FILE  = 'k8s/backend/deployment.yml'
+        SMOKE_URL        = 'http://localhost:30500/'
     }
 
     options {
-        buildDiscarder(logRotator(numToKeepStr: '5'))  // Save disk on free tier
+        buildDiscarder(logRotator(numToKeepStr: '5'))
         timeout(time: 20, unit: 'MINUTES')
         timestamps()
     }
@@ -24,7 +26,7 @@ pipeline {
                 stage('Backend Deps') {
                     steps {
                         dir('server') {
-                            sh 'npm ci --production'
+                            sh 'npm ci --omit=dev'
                         }
                     }
                 }
@@ -61,16 +63,34 @@ pipeline {
             }
         }
 
-        stage('Deploy to k3s') {
+        stage('Bump GitOps Manifest') {
             when { branch 'main' }
             steps {
-                sh """
-                    kubectl set image deployment/apexpos-backend \
-                        backend=${DOCKER_IMAGE}:${BUILD_NUMBER} \
-                        -n apexpos
-                    kubectl rollout status deployment/apexpos-backend \
-                        -n apexpos --timeout=120s
-                """
+                withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
+                    sh """
+                        set -e
+                        sed -i 's|image: .*apexpos-backend:.*|image: ${DOCKER_IMAGE}:${BUILD_NUMBER}|' ${DEPLOYMENT_FILE}
+                        git config user.email 'jenkins@apexpos.local'
+                        git config user.name 'Jenkins CI'
+                        git add ${DEPLOYMENT_FILE}
+                        if git diff --staged --quiet; then
+                            echo 'Image tag unchanged, skipping git push'
+                        else
+                            git commit -m '[ci] backend image ${BUILD_NUMBER}'
+                            git push https://\${GITHUB_TOKEN}@github.com/Ntharusha/ApexPOS.git HEAD:main
+                        fi
+                    """
+                }
+            }
+        }
+
+        stage('Wait for Argo CD Sync') {
+            when { branch 'main' }
+            steps {
+                sh '''
+                    echo "Waiting 60s for Argo CD to sync GitOps manifest..."
+                    sleep 60
+                '''
             }
         }
 
@@ -78,8 +98,7 @@ pipeline {
             when { branch 'main' }
             steps {
                 sh """
-                    sleep 10
-                    curl -f http://localhost:30500/ || exit 1
+                    curl -f ${SMOKE_URL} || exit 1
                     echo "Backend health check passed"
                 """
             }
@@ -88,13 +107,12 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline succeeded!'
+            echo 'Pipeline succeeded — Argo CD will deploy from updated k8s manifest.'
         }
         failure {
             echo 'Pipeline failed!'
         }
         always {
-            // Clean up Docker images to save disk (30GB limit on free tier)
             sh 'docker image prune -f || true'
         }
     }

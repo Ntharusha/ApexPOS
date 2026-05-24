@@ -64,11 +64,12 @@ cd ApexPOS_SaaS_Main
 cd server
 npm install
 ```
-Create a `.env` file in the `server` directory:
+Copy `server/env.example` to `server/.env` and edit:
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/apexpos
+MONGODB_URI=mongodb://localhost:27017/apexpos
 JWT_SECRET=your_super_secret_key
+ALLOWED_ORIGINS=http://localhost:5173
 ```
 Start the backend development server:
 ```bash
@@ -80,9 +81,9 @@ npm run dev
 cd client
 npm install
 ```
-Create a `.env` file in the `client` directory (optional, depending on your Vite setup):
+Copy `client/env.example` to `client/.env`:
 ```env
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http://localhost:5000/api
 ```
 Start the frontend development server:
 ```bash
@@ -107,11 +108,12 @@ Planning to deploy ApexPOS to production? We have structured a highly optimized 
 | **k3s** | Lightweight Kubernetes (CNCF certified) | Always free (OSS) |
 | **Jenkins** | Open-source CI/CD | Always free (OSS) |
 | **Terraform** | Open-source IaC | Always free (OSS) |
-| **Ansible** | Open-source config management | Always free (OSS) |
+| **Argo CD** | Open-source GitOps CD | Always free (OSS) |
 | **Let's Encrypt** | Free SSL certificates | Always free |
 | **Cloudflare** | Free DNS + CDN + SSL | Always free |
 
-👉 **[View the full step-by-step Production Deployment Plan](./DEPLOYMENT_PLAN.md)**
+👉 **[Implementation plan (EC2 + k3s + Jenkins CI + Argo CD)](./IMPLEMENTATION_PLAN_EC2_K8S.md)** — phased execution checklist  
+👉 **[Full deployment reference](./ApexPOS_Deployment_Plan_Free_Tier.md)** — commands, manifests, troubleshooting
 
 ---
 

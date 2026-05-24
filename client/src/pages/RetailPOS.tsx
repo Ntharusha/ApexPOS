@@ -106,6 +106,7 @@ const RetailPOS = () => {
                             quantity: item.quantity
                         }))
                     });
+                    await api.post(`/hospitality/orders/${orderId}/pay`);
                 }
             }
 

@@ -12,8 +12,8 @@ const LoyaltyProgram = () => {
 
     const fetchCustomers = async () => {
         try {
-            const res = await api.get('/customers');
-            setCustomers(res.data || []);
+            const res = await api.get<any[]>('/customers');
+            setCustomers(res || []);
             setLoading(false);
         } catch (error) {
             console.error('Failed to fetch loyalty customers', error);

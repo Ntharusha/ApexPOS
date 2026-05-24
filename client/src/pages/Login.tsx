@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 type LoginMode = 'password' | 'pin';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const IS_DEV = import.meta.env.DEV;
+
 const Login = () => {
     const [mode, setMode] = useState<LoginMode>('password');
     const [email, setEmail] = useState('');
@@ -23,7 +26,7 @@ const Login = () => {
         setError('');
         setIsLoading(true);
         try {
-            const res = await fetch('http://localhost:5000/api/auth/login', {
+            const res = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -33,8 +36,7 @@ const Login = () => {
                 login(data.user, data.token);
                 navigate('/');
             } else {
-                // Fallback demo credentials
-                if (email === 'admin' && password === 'admin') {
+                if (IS_DEV && email === 'admin' && password === 'admin') {
                     login({ name: 'Demo Admin', role: 'super_admin' });
                     navigate('/');
                 } else {
@@ -42,12 +44,11 @@ const Login = () => {
                 }
             }
         } catch {
-            // No server — allow demo credentials
-            if (email === 'admin' && password === 'admin') {
+            if (IS_DEV && email === 'admin' && password === 'admin') {
                 login({ name: 'Demo Admin', role: 'super_admin' });
                 navigate('/');
             } else {
-                setError('Cannot connect to server. Use admin / admin for demo.');
+                setError(IS_DEV ? 'Cannot connect to server. Use admin / admin for local demo.' : 'Cannot connect to server.');
             }
         } finally {
             setIsLoading(false);
@@ -64,7 +65,7 @@ const Login = () => {
         if (newPin.length === 4) {
             setIsLoading(true);
             try {
-                const res = await fetch('http://localhost:5000/api/auth/pin-login', {
+                const res = await fetch(`${API_BASE}/auth/pin-login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pin: newPin }),

@@ -16,8 +16,8 @@ const KitchenDisplay = () => {
 
     const fetchOrders = async () => {
         try {
-            const res = await api.get('/hospitality/orders/active');
-            setOrders(res.data || []);
+            const res = await api.get<any[]>('/hospitality/orders/active');
+            setOrders(res || []);
         } catch (error) {
             console.error('Failed to fetch KDS orders', error);
         }

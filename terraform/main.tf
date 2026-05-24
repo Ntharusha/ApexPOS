@@ -111,6 +111,20 @@ resource "aws_security_group" "server" {
     protocol    = "tcp"
     cidr_blocks = [var.admin_ip]
   }
+  # Argo CD UI (NodePort)
+  ingress {
+    from_port   = 30080
+    to_port     = 30080
+    protocol    = "tcp"
+    cidr_blocks = [var.admin_ip]
+  }
+  # Backend NodePort (smoke tests / interim API)
+  ingress {
+    from_port   = 30500
+    to_port     = 30500
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   egress {
     from_port   = 0

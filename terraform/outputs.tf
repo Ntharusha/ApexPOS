@@ -9,8 +9,13 @@ output "jenkins_url" {
 }
 
 output "backend_api_url" {
-  description = "Backend API URL"
-  value       = "http://${aws_eip.server.public_ip}:5000"
+  description = "Backend API URL (NodePort until ingress/DNS is ready)"
+  value       = "http://${aws_eip.server.public_ip}:30500"
+}
+
+output "argocd_url" {
+  description = "Argo CD UI (after install, NodePort 30080)"
+  value       = "http://${aws_eip.server.public_ip}:30080"
 }
 
 output "ssh_command" {

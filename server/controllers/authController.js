@@ -2,7 +2,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { Staff } = require('../models/AllModels');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ceylonpos-secret-key-2026';
+const { getJwtSecret } = require('../utils/jwtSecret');
+const JWT_SECRET = getJwtSecret();
 const JWT_EXPIRES = '8h';
 
 // ─── Email + Password Login (Web Dashboard) ───────────────────────────────────

@@ -92,6 +92,7 @@ export const useStore = create<AppState>()(
                 restaurant: {}
             },
             posMode: null,
+            activeTable: null,
 
             setPosMode: (mode) => set((state) => {
                 let activeCart: CartItem[] = [];
@@ -127,8 +128,6 @@ export const useStore = create<AppState>()(
 
             login: (user, token) => set({ user, token: token || null, isAuthenticated: true }),
             logout: () => set({ user: null, token: null, isAuthenticated: false, currentShift: null }),
-            activeTable: null,
-            setActiveTable: (table) => set({ activeTable: table }),
             setShift: (shift) => set({ currentShift: shift }),
 
             cart: [],

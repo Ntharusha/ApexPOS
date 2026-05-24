@@ -10,8 +10,8 @@ const SmartInventory = () => {
 
     const fetchExpiringProducts = async () => {
         try {
-            const res = await api.get('/products');
-            const allProducts = res.data || [];
+            const res = await api.get<any[]>('/products');
+            const allProducts = res || [];
             
             // Filter for products that have batches expiring soon (within 7 days)
             const soon = allProducts.flatMap((p: any) => 

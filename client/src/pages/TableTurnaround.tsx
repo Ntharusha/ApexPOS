@@ -9,8 +9,8 @@ const TableTurnaround = () => {
 
     const fetchTables = async () => {
         try {
-            const res = await api.get('/hospitality/tables');
-            setTables(res.data || []);
+            const res = await api.get<any[]>('/hospitality/tables');
+            setTables(res || []);
             setLoading(false);
         } catch (error) {
             console.error('Failed to fetch turnaround data', error);

@@ -2,9 +2,17 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Product = require('./models/Product');
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://apexpos:yqrqhN37S2dFBdw2@apexpos.rscehtw.mongodb.net/')
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+    console.error('MONGODB_URI is required. Example: mongodb://localhost:27017/apexpos');
+    process.exit(1);
+}
+mongoose.connect(uri)
     .then(() => console.log('MongoDB Connected for Seeding'))
-    .catch(err => console.log(err));
+    .catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
 
 const seedProducts = [
     // Phones

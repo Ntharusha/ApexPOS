@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ceylonpos-secret-key-2026';
+const { getJwtSecret } = require('../utils/jwtSecret');
+const JWT_SECRET = getJwtSecret();
 
 const auth = (req, res, next) => {
     const authHeader = req.headers.authorization;

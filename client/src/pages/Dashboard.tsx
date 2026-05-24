@@ -107,9 +107,9 @@ const Dashboard = () => {
                     <div className="flex-1">
                         <ResponsiveContainer width="100%" height={240}>
                             <BarChart data={stats.brandSummary}>
-                                <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{fill: CHART_TEXT_COLOR, fontSize: 8, fontWeight: 900}} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: CHART_TEXT_COLOR, fontSize: 8, fontWeight: 900}} />
                                 <Tooltip contentStyle={{backgroundColor: 'var(--surface)', borderRadius: '1rem', border: 'none'}} />
-                                <Bar dataKey="count" radius={[10, 10, 0, 0]}>
+                                <Bar dataKey="value" radius={[10, 10, 0, 0]}>
                                     {stats.brandSummary.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                 </Bar>
                             </BarChart>
@@ -117,7 +117,7 @@ const Dashboard = () => {
                     </div>
                     <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
                         <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-text-muted">
-                            <span>Total Groups</span>
+                            <span>Top Brands</span>
                             <span className="text-text">{stats.brandSummary.length}</span>
                         </div>
                     </div>
