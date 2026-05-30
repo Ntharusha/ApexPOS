@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apexpos
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Ntharusha/ApexPOS.git
+    targetRevision: main
+    path: k8s
+    directory:
+      recurse: true
+      exclude: argocd/*
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apexpos
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
