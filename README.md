@@ -38,7 +38,7 @@ ApexPOS goes beyond basic sales, offering industry-specific modules to run your 
 - **Data Visualization:** Recharts
 - **Internationalization:** `react-i18next`
 
-**Backend (Server)**
+**Backend (Server)**a
 - **Environment:** Node.js + Express.js
 - **Database:** MongoDB (with Mongoose ORM)
 - **Authentication:** JWT (JSON Web Tokens) & bcryptjs
