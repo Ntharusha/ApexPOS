@@ -1,0 +1,12 @@
+---
+- name: Complete ApexPOS Server Setup
+  import_playbook: setup-jenkins.yml
+
+- name: Setup k3s Kubernetes
+  import_playbook: setup-k3s.yml
+
+- name: Setup Argo CD
+  import_playbook: setup-argocd.yml
+
+- name: Setup CloudWatch Monitoring
+  import_playbook: setup-cloudwatch.yml

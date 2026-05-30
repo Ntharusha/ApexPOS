@@ -1,0 +1,5 @@
+---
+- import_playbook: playbooks/setup-k3s.yml
+- import_playbook: playbooks/setup-jenkins.yml
+- import_playbook: playbooks/setup-argocd.yml
+- import_playbook: playbooks/setup-cloudwatch.yml

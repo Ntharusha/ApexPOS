@@ -1,0 +1,5 @@
+key_pair_name = "apexpos-key"
+admin_ip      = "YOUR_PUBLIC_IP/32"
+alert_email   = "you@example.com"
+aws_region    = "ap-south-1"
+environment   = "prod"
