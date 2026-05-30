@@ -7,9 +7,15 @@
 4. [Phase 1 — MongoDB Atlas Free Cluster](#4-phase-1--mongodb-atlas-free-cluster)
 5. [Phase 2 — Dockerization](#5-phase-2--dockerization)
 6. [Phase 3 — Terraform (AWS Free-Tier Infrastructure)](#6-phase-3--terraform-aws-free-tier-infrastructure)
+<<<<<<< Updated upstream
 7. [Phase 4 — k3s Kubernetes Setup](#7-phase-4--k3s-kubernetes-setup)
 8. [Phase 5 — Jenkins CI Setup](#8-phase-5--jenkins-ci-setup)
 9. [Phase 6 — Argo CD GitOps](#9-phase-6--argo-cd-gitops)
+=======
+7. [Phase 4 — Server Configuration (Shell Scripts)](#7-phase-4--server-configuration-shell-scripts)
+8. [Phase 5 — Kubernetes with k3s (Free Alternative to EKS)](#8-phase-5--kubernetes-with-k3s)
+9. [Phase 6 — Jenkins CI/CD Pipeline](#9-phase-6--jenkins-cicd-pipeline)
+>>>>>>> Stashed changes
 10. [Phase 7 — Frontend Deployment (Vercel Free)](#10-phase-7--frontend-deployment-vercel-free)
 11. [Phase 8 — AWS CloudWatch Free Tier Monitoring](#11-phase-8--aws-cloudwatch-free-tier-monitoring)
 12. [Phase 9 — DNS & SSL (Free)](#12-phase-9--dns--ssl-free)
@@ -51,11 +57,19 @@
                                     │  Shared, 3 Node RS     │
                                     └────────────────────────┘
 
+<<<<<<< Updated upstream
 ┌──────────────┐    ┌──────────────┐    ┌──────────────────┐
      │  Terraform   │    │     Argo CD  │    │  CloudWatch Free │
      │  (Free OSS)  │    │  (GitOps)    │    │  10 Alarms       │
      └──────────────┘    └──────────────┘    │  5GB Logs        │
                                              └──────────────────┘
+=======
+    ┌──────────────┐    ┌──────────────┐    ┌──────────────────┐
+    │  Terraform   │    │ ShellScripts │    │  CloudWatch Free │
+    │  (Free OSS)  │    │ (Deployment) │    │  10 Alarms       │
+    └──────────────┘    └──────────────┘    │  5GB Logs        │
+                                            └──────────────────┘
+>>>>>>> Stashed changes
 ```
 
 ### Key Design Decisions for Free Tier
@@ -86,7 +100,10 @@
 | **k3s** | Lightweight Kubernetes (CNCF certified) | Always free (OSS) |
 | **Jenkins** | Open-source CI/CD | Always free (OSS) |
 | **Terraform** | Open-source IaC | Always free (OSS) |
+<<<<<<< Updated upstream
 | **Argo CD** | Open-source GitOps CD | Always free (OSS) |
+=======
+>>>>>>> Stashed changes
 | **Let's Encrypt** | Free SSL certificates | Always free |
 | **Cloudflare** | Free DNS + CDN + SSL | Always free |
 
@@ -677,6 +694,7 @@ terraform apply
 
 ---
 
+<<<<<<< Updated upstream
 ## 7. Phase 4 — k3s Kubernetes Setup
 
 k3s is installed via Terraform `userdata.sh` bootstrap script. After the EC2 instance is ready:
@@ -828,6 +846,67 @@ spec:
       prune: true
       selfHeal: true
 ```
+=======
+## 7. Phase 4 — Server Configuration (Shell Scripts)
+
+Rather than using complex configuration management tools like Ansible, we use lightweight, standalone shell scripts to configure our server. These scripts are located in the `scripts/` directory and perform the identical actions directly on the target EC2 instance.
+
+### 7.1 Setup Scripts Overview
+
+*   `scripts/bootstrap-ec2-k3s.sh`: Prepares the system (creates 2GB swap, installs Docker, installs k3s, and installs the ingress-nginx controller).
+*   `scripts/install-jenkins.sh`: Starts Jenkins inside a Docker container on the host.
+*   `scripts/install-argocd.sh`: Installs Argo CD on k3s and exposes it via NodePort 30080.
+*   `scripts/setup-k8s-app.sh`: Prepares the K8s secrets and applies the initial backend service/deployment/ingress.
+
+### 7.2 Bootstrap & Configuration Steps
+
+After your EC2 instance is launched and you can connect via SSH:
+
+1. **SSH into the EC2 instance**:
+   ```bash
+   ssh -i ~/.ssh/apexpos-key.pem ubuntu@<EC2-PUBLIC-IP>
+   ```
+
+2. **Clone your repository on the EC2 instance**:
+   ```bash
+   git clone https://github.com/Ntharusha/ApexPOS.git
+   cd ApexPOS
+   ```
+
+3. **Bootstrap k3s & Docker**:
+   Run the bootstrap script as root:
+   ```bash
+   sudo bash scripts/bootstrap-ec2-k3s.sh
+   ```
+   This will:
+   - Create a 2GB swap file.
+   - Install Docker (for Jenkins agent builds).
+   - Install k3s.
+   - Configure `kubectl` for the `ubuntu` user.
+   - Install the Nginx Ingress Controller.
+
+4. **Install Argo CD**:
+   Run the installation script:
+   ```bash
+   bash scripts/install-argocd.sh
+   ```
+   This will:
+   - Create the `argocd` namespace.
+   - Deploy Argo CD to the cluster.
+   - Expose the Argo CD server Web UI via NodePort `30080`.
+   - Print the generated admin password.
+
+5. **Install Jenkins (Docker on Host)**:
+   Run the installation script as root:
+   ```bash
+   sudo bash scripts/install-jenkins.sh
+   ```
+   This will:
+   - Create a docker volume `jenkins_home`.
+   - Start the Jenkins container, mounting the Docker socket and kubeconfig.
+   - Print the initial administrator password.
+
+>>>>>>> Stashed changes
 
 ---
 
@@ -1118,9 +1197,15 @@ pipeline {
 }
 ```
 
+<<<<<<< Updated upstream
 ### 9.2 Jenkins Setup Steps (After Helm Installation)
 1. **Access Jenkins**: `http://<EC2-IP>:30081`
 2. **Get Initial Password**: `kubectl -n jenkins get secret jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 -d`
+=======
+### 9.2 Jenkins Setup Steps
+1. **Access Jenkins**: `http://<EC2-IP>:8080`
+2. **Enter Initial Password** (printed by the `install-jenkins.sh` script, or from `docker logs jenkins` / `/var/jenkins_home/secrets/initialAdminPassword` inside the container)
+>>>>>>> Stashed changes
 3. **Install Suggested Plugins** + these additional:
    - Docker Pipeline
    - Git / GitHub Integration
@@ -1375,6 +1460,7 @@ variable "alert_email" { type = string }
 variable "aws_region" { type = string }
 ```
 
+<<<<<<< Updated upstream
 ### 11.3 CloudWatch Agent Config
 Manually install CloudWatch Agent on the EC2 instance:
 
@@ -1386,6 +1472,9 @@ sudo dpkg -i amazon-cloudwatch-agent.deb
 # Create config file at /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 ```
 
+=======
+### 11.3 CloudWatch Agent Config (`scripts/cloudwatch-config.json`)
+>>>>>>> Stashed changes
 ```json
 {
   "agent": {
@@ -1569,6 +1658,15 @@ ApexPOS/
 │       ├── vpc/main.tf                      # VPC (free)
 │       ├── ec2/main.tf                      # t2.micro (free)
 │       └── cloudwatch/main.tf               # Monitoring (free)
+<<<<<<< Updated upstream
+=======
+├── scripts/                                 # Server Setup & Config Scripts
+│   ├── bootstrap-ec2-k3s.sh                 # System bootstrap (k3s, Docker, swap)
+│   ├── install-jenkins.sh                   # Install Jenkins in Docker
+│   ├── install-argocd.sh                    # Install Argo CD on k3s
+│   ├── setup-k8s-app.sh                     # Configure K8s secrets & app manifests
+│   └── cloudwatch-config.json               # CloudWatch Agent configuration
+>>>>>>> Stashed changes
 ├── k8s/                                     # Kubernetes Manifests
 │   ├── namespace.yml
 │   ├── backend/
@@ -1597,8 +1695,13 @@ ApexPOS/
 | **Phase 1** | MongoDB Atlas M0 Setup | 0.5 day |
 | **Phase 2** | Dockerization + Code Changes | 1 day |
 | **Phase 3** | Terraform (VPC, EC2, CloudWatch) | 1–2 days |
+<<<<<<< Updated upstream
 | **Phase 4** | k3s Setup + Nginx Ingress | 0.5 day |
 | **Phase 5** | Argo CD + Jenkins (Helm) | 0.5 day |
+=======
+| **Phase 4** | Server Configuration (Shell Scripts) | 1 day |
+| **Phase 5** | k3s + K8s Manifests | 1 day |
+>>>>>>> Stashed changes
 | **Phase 6** | Jenkins Pipeline | 1 day |
 | **Phase 7** | Vercel Frontend | 0.5 day |
 | **Phase 8** | CloudWatch Monitoring | 0.5 day |
@@ -1657,7 +1760,11 @@ ApexPOS/
 | MongoDB Atlas M0 | **$0** (always free) |
 | Vercel Hobby | **$0** (always free) |
 | Docker Hub (free plan) | **$0** (always free) |
+<<<<<<< Updated upstream
 | k3s / Jenkins / Terraform / Argo CD | **$0** (open source) |
+=======
+| k3s / Jenkins / Terraform | **$0** (open source) |
+>>>>>>> Stashed changes
 | Let's Encrypt SSL | **$0** (always free) |
 | Cloudflare DNS | **$0** (always free) |
 | **TOTAL** | **$0/month** |
@@ -1673,7 +1780,11 @@ ApexPOS/
 □ 4. Create Docker Hub account
 □ 5. Create AWS EC2 Key Pair
 □ 6. Run: terraform init && terraform apply
+<<<<<<< Updated upstream
 □ 7. SSH into EC2 and configure k3s (setup nginx ingress, Argo CD, Jenkins via Helm)
+=======
+□ 7. Run setup shell scripts on EC2 (bootstrap, Jenkins, Argo CD)
+>>>>>>> Stashed changes
 □ 8. Build & push Docker image
 □ 9. Configure Argo CD to sync k8s manifests from GitHub
 □ 10. Set up Jenkins pipeline
