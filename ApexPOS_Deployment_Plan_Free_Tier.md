@@ -129,7 +129,7 @@ kubectl      # K8s CLI
 docker       # Container runtime
 aws-cli      # AWS management
 helm         # K8s package manager
-argocd       # GitOps CD
+argocd       # GitOps CD.
 ```
 
 ---
