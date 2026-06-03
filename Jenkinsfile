@@ -5,7 +5,8 @@ pipeline {
         DOCKER_HUB_CREDS = credentials('dockerhub-credentials')
         DOCKER_IMAGE     = 'tharusha69/apexpos-backend'
         DEPLOYMENT_FILE  = 'k8s/backend/deployment.yml'
-        SMOKE_URL        = 'http://localhost:30500/'
+        NAMESPACE        = 'apexpos'
+        DEPLOYMENT       = 'apexpos-backend'
     }
 
     options {
@@ -30,7 +31,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Frontend Build') {
+                stage('Frontend Lint & Build') {
                     steps {
                         dir('client') {
                             sh 'npm ci'
@@ -43,7 +44,12 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            when { branch 'main' }
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'dev'
+                }
+            }
             steps {
                 dir('server') {
                     sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
@@ -53,7 +59,12 @@ pipeline {
         }
 
         stage('Push to Docker Hub') {
-            when { branch 'main' }
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'dev'
+                }
+            }
             steps {
                 sh """
                     echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin
@@ -63,43 +74,34 @@ pipeline {
             }
         }
 
-        stage('Bump GitOps Manifest') {
-            when { branch 'main' }
-            steps {
-                withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
-                    sh """
-                        set -e
-                        sed -i 's|image: .*apexpos-backend:.*|image: ${DOCKER_IMAGE}:${BUILD_NUMBER}|' ${DEPLOYMENT_FILE}
-                        git config user.email 'jenkins@apexpos.local'
-                        git config user.name 'Jenkins CI'
-                        git add ${DEPLOYMENT_FILE}
-                        if git diff --staged --quiet; then
-                            echo 'Image tag unchanged, skipping git push'
-                        else
-                            git commit -m '[ci] backend image ${BUILD_NUMBER}'
-                            git push https://\${GITHUB_TOKEN}@github.com/Ntharusha/ApexPOS.git HEAD:main
-                        fi
-                    """
+        stage('Deploy to k3s') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'dev'
                 }
             }
-        }
-
-        stage('Wait for Argo CD Sync') {
-            when { branch 'main' }
             steps {
-                sh '''
-                    echo "Waiting 60s for Argo CD to sync GitOps manifest..."
-                    sleep 60
-                '''
+                sh """
+                    export KUBECONFIG=/root/.kube/config
+                    kubectl rollout restart deployment/${DEPLOYMENT} -n ${NAMESPACE}
+                    kubectl rollout status deployment/${DEPLOYMENT} -n ${NAMESPACE} --timeout=180s
+                """
             }
         }
 
         stage('Smoke Test') {
-            when { branch 'main' }
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'dev'
+                }
+            }
             steps {
                 sh """
-                    curl -f ${SMOKE_URL} || exit 1
-                    echo "Backend health check passed"
+                    sleep 10
+                    curl -f http://localhost:30500/ || exit 1
+                    echo "Backend health check passed ✅"
                 """
             }
         }
@@ -107,10 +109,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline succeeded — Argo CD will deploy from updated k8s manifest.'
+            echo '✅ Pipeline succeeded — backend deployed to k3s!'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo '❌ Pipeline failed! Check the logs above.'
         }
         always {
             sh 'docker image prune -f || true'
