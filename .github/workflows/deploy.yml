@@ -1,0 +1,138 @@
+name: CI/CD — Build, Push & Deploy ApexPOS Backend
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'server/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
+
+env:
+  DOCKER_IMAGE: tharusha69/apexpos-backend
+  EC2_HOST: 13.206.37.231
+  EC2_USER: ubuntu
+  NAMESPACE: apexpos
+  DEPLOYMENT: apexpos-backend
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: Lint & Build client (optional validation)
+  # ─────────────────────────────────────────────
+  lint-client:
+    name: 🔍 Lint & Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Run ESLint
+        run: npm run lint
+        working-directory: client
+
+      - name: Build production bundle
+        run: npm run build
+        working-directory: client
+
+  # ─────────────────────────────────────────────
+  # Job 2: Build & Push Docker image
+  # ─────────────────────────────────────────────
+  build-push:
+    name: 🐳 Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: lint-client
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=sha,prefix=,suffix=,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────────
+  # Job 3: Deploy to EC2 k3s cluster
+  # ─────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy to EC2 k3s
+    runs-on: ubuntu-latest
+    needs: build-push
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    steps:
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            echo "🔄 Pulling latest image and restarting deployment..."
+            sudo kubectl rollout restart deployment/${{ env.DEPLOYMENT }} -n ${{ env.NAMESPACE }}
+            echo "⏳ Waiting for rollout to complete..."
+            sudo kubectl rollout status deployment/${{ env.DEPLOYMENT }} -n ${{ env.NAMESPACE }} --timeout=180s
+            echo "✅ Rollout successful!"
+
+      - name: Backend health check
+        run: |
+          echo "Running health check on http://${{ env.EC2_HOST }}:30500/"
+          sleep 10
+          curl -f --retry 5 --retry-delay 5 http://${{ env.EC2_HOST }}:30500/ || exit 1
+          echo "✅ Backend is healthy!"
+
+  # ─────────────────────────────────────────────
+  # Job 4: Notify success/failure
+  # ─────────────────────────────────────────────
+  notify:
+    name: 📣 Notify
+    runs-on: ubuntu-latest
+    needs: [build-push, deploy]
+    if: always()
+    steps:
+      - name: Pipeline status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Deployment to EC2 succeeded!"
+            echo "🌐 Backend: http://${{ env.EC2_HOST }}:30500/"
+          else
+            echo "❌ Deployment failed — check the logs above."
+            exit 1
+          fi
