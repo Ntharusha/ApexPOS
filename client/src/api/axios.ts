@@ -39,16 +39,28 @@ async function request<T>(
     // Handle 401 globally
     if (res.status === 401) {
         localStorage.removeItem('apex-pos-storage');
+        // Keep redirect simple; avoid full page reload if you have a router-aware approach.
         window.location.href = '/login';
         throw new Error('Unauthorized');
     }
 
+
+    const contentType = res.headers.get('content-type') || '';
     const text = await res.text();
+
     if (!text) return {} as T;
 
-    const data = JSON.parse(text);
-    if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
-    return data as T;
+    // Only parse JSON when the server actually returns JSON.
+    if (contentType.includes('application/json')) {
+        const data = JSON.parse(text);
+        if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`);
+        return data as T;
+    }
+
+    // Non-JSON responses: surface the raw body.
+    if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
+    return text as unknown as T;
+
 }
 
 const api = {

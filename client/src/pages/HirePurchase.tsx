@@ -335,8 +335,6 @@ const HirePurchase = () => {
     const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Completed'>('All');
     const theme = useStore(state => state.theme);
 
-    useEffect(() => { fetchHPAccounts(); }, []);
-
     const fetchHPAccounts = async () => {
         try {
             const res = await fetch('http://localhost:5000/api/hp');
@@ -344,6 +342,8 @@ const HirePurchase = () => {
             setHpAccounts(data);
         } catch (error) { console.error('Failed to fetch HP accounts', error); }
     };
+
+    useEffect(() => { fetchHPAccounts(); }, []);
 
     const handleCollect = async (accountId: string, installmentId: string, amount: number) => {
         try {

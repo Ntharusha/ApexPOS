@@ -15,11 +15,12 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const registrationRoutes = require('./routes/registrationRoutes');
 const authRoutes = require('./routes/authRoutes');
-const hospitalityRoutes = require('./routes/hospitalityRoutes');
+
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',')
+    ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim())
     : ['http://localhost:5173'];
+
 
 const app = express();
 const server = http.createServer(app);
@@ -31,7 +32,8 @@ const limiter = rateLimit({
     max: 100, // Limit each IP to 100 requests per windowMs
     message: 'Too many requests from this IP, please try again after 15 minutes'
 });
-app.use('/api/', limiter);
+app.use('/api', limiter);
+
 
 const io = new Server(server, {
     cors: {

@@ -19,10 +19,6 @@ const Expenses = () => {
     });
     const theme = useStore(state => state.theme);
 
-    useEffect(() => {
-        fetchExpenses();
-    }, []);
-
     const fetchExpenses = async () => {
         try {
             const res = await fetch('http://localhost:5000/api/expenses');
@@ -32,6 +28,10 @@ const Expenses = () => {
             console.error('Failed to fetch expenses', error);
         }
     };
+
+    useEffect(() => {
+        fetchExpenses();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

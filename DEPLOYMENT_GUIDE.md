@@ -181,7 +181,7 @@ kubectl get svc -n apexpos
 curl http://YOUR_EC2_IP:30500/
 
 # Test MongoDB connection
-curl http://YOUR_EC2_IP:30500/api/health
+curl http://YOUR_EC2_IP:30500/
 ```
 
 ### Step 9: Deploy Frontend (Optional)
