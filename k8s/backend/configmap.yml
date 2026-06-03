@@ -7,4 +7,4 @@ data:
   PORT: "5000"
   NODE_ENV: "production"
   # Allow local dev + EC2 NodePort access + Vercel frontend
-  ALLOWED_ORIGINS: "http://localhost,http://127.0.0.1,http://YOUR_EC2_IP,http://YOUR_EC2_IP:30500,https://apexpos.vercel.app" # Update YOUR_EC2_IP before deploy
+  ALLOWED_ORIGINS: "http://localhost,http://127.0.0.1,http://13.206.37.231,http://13.206.37.231:30500,https://client-jade-phi.vercel.app,https://client-75ejziams-tharusha-bashithas-projects.vercel.app"
