@@ -23,12 +23,11 @@ if docker ps -a --format '{{.Names}}' | grep -q '^jenkins$'; then
   fi
 fi
 
-echo "Starting Jenkins with memory limits (400MB max)..."
+echo "Starting Jenkins with memory limits (700MB max)..."
 
 docker run -d --name jenkins \
   --restart unless-stopped \
-  --memory="400m" \
-  --memory-swap="600m" \
+  --memory="700m" \
   --cpus="0.8" \
   -p 8080:8080 -p 50000:50000 \
   -e JAVA_OPTS="-Xmx256m -Xms128m -XX:MaxMetaspaceSize=128m -Dhudson.model.DirectoryBrowserSupport.CSP=" \
@@ -39,7 +38,7 @@ docker run -d --name jenkins \
   jenkins/jenkins:lts-jdk17
 
 echo ""
-echo "✅ Jenkins starting on port 8080 (memory limited to 400MB)"
+echo "✅ Jenkins starting on port 8080 (memory limited to 700MB)"
 echo "⏳ Wait ~60 seconds for Jenkins to fully start..."
 echo ""
 echo "Initial admin password (run after 60 seconds):"
