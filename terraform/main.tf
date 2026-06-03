@@ -76,12 +76,12 @@ resource "aws_security_group" "server" {
     protocol    = "tcp"
     cidr_blocks = [var.admin_ip]
   }
-  # Jenkins
+  # Kubernetes Dashboard (HTTPS NodePort)
   ingress {
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = 30443
+    to_port     = 30443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.admin_ip]
   }
   # HTTP (k3s Ingress)
   ingress {
@@ -189,7 +189,7 @@ resource "aws_instance" "server" {
 
   tags = {
     Name = "apexpos-${var.environment}-server"
-    Role = "k3s-jenkins-argocd"
+    Role = "k3s-github-actions"
   }
 }
 

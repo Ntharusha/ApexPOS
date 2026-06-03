@@ -2,18 +2,14 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDS = credentials('dockerhub-credentials')
-        DOCKER_IMAGE     = 'tharusha69/apexpos-backend'
-        DEPLOYMENT_FILE  = 'k8s/backend/deployment.yml'
-        NAMESPACE        = 'apexpos'
-        DEPLOYMENT       = 'apexpos-backend'
-        // Limit Node memory consumption to 256MB to prevent OOM
-        NODE_OPTIONS     = '--max-old-space-size=256'
+        NAMESPACE = 'apexpos'
+        BACKEND_IMAGE = 'localhost:5000/apexpos-backend:latest'
+        FRONTEND_IMAGE = 'localhost:5000/apexpos-frontend:latest'
     }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '3'))
-        timeout(time: 20, unit: 'MINUTES')
+        timeout(time: 15, unit: 'MINUTES')
         disableConcurrentBuilds()
     }
 
@@ -24,103 +20,82 @@ pipeline {
             }
         }
 
-        // Run sequentially (NOT in parallel) to conserve memory on t3.micro
-        stage('Backend Dependencies') {
+        stage('Configure Env') {
             steps {
-                dir('server') {
-                    echo '📦 Installing Backend Dependencies...'
-                    sh 'npm ci --omit=dev --no-audit --no-fund'
+                script {
+                    echo '🔍 Querying Minikube Node IP...'
+                    // Get the Kubernetes Node IP (exposed NodePort IP) dynamically
+                    def nodeIp = sh(script: "kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type==\"InternalIP\")].address}'", returnStdout: true).trim()
+                    if (!nodeIp) {
+                        error "Could not detect Minikube Node IP! Check Kubernetes connection."
+                    }
+                    echo "✅ Detected Node IP: ${nodeIp}"
+                    
+                    // Write VITE_API_URL pointing to backend NodePort (30500)
+                    sh "echo 'VITE_API_URL=http://${nodeIp}:30500/api' > client/.env"
+                    echo "📝 Configured client/.env with VITE_API_URL=http://${nodeIp}:30500/api"
                 }
             }
         }
 
-        stage('Frontend Dependencies & Build') {
+        stage('Build Images') {
             steps {
-                dir('client') {
-                    echo '📦 Installing Frontend Dependencies...'
-                    sh 'npm ci --no-audit --no-fund'
-                    echo '🔍 Linting Frontend...'
-                    sh 'npm run lint'
-                    echo '🚀 Building Frontend Production Bundle...'
-                    sh 'npm run build'
-                }
+                echo '🐳 Building Backend Image...'
+                sh "docker build -t ${BACKEND_IMAGE} ./server"
+
+                echo '🐳 Building Frontend Image...'
+                sh "docker build -t ${FRONTEND_IMAGE} ./client"
             }
         }
 
-        stage('Build Docker Image') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'dev'
-                }
-            }
+        stage('Push Images') {
             steps {
-                dir('server') {
-                    echo '🐳 Building Docker Image...'
-                    sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
-                    sh "docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest"
-                }
+                echo '📤 Pushing Images to local registry...'
+                sh "docker push ${BACKEND_IMAGE}"
+                sh "docker push ${FRONTEND_IMAGE}"
             }
         }
 
-        stage('Push to Docker Hub') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'dev'
-                }
-            }
+        stage('Deploy to Kubernetes') {
             steps {
-                echo '📤 Pushing Image to Docker Hub...'
-                sh """
-                    echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin
-                    docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                    docker push ${DOCKER_IMAGE}:latest
-                """
-            }
-        }
+                echo '☸️ Deploying Namespace, PVs, and PVCs...'
+                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/namespace.yml"
+                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/database/"
 
-        stage('Deploy to k3s') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'dev'
-                }
-            }
-            steps {
-                echo '🔄 Restarting Kubernetes Deployment...'
-                sh """
-                    export KUBECONFIG=/root/.kube/config
-                    kubectl rollout restart deployment/${DEPLOYMENT} -n ${NAMESPACE}
-                    kubectl rollout status deployment/${DEPLOYMENT} -n ${NAMESPACE} --timeout=180s
-                """
-            }
-        }
+                echo '☸️ Deploying Configs and Secrets...'
+                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/backend/configmap.yml"
+                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/backend/secrets.yml"
 
-        stage('Smoke Test') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'dev'
-                }
-            }
-            steps {
-                echo '🩺 Running API health check...'
-                sh """
-                    sleep 10
-                    curl -f http://localhost:30500/ || exit 1
-                    echo "Backend health check passed ✅"
-                """
+                echo '☸️ Deploying App Services (Backend & Frontend)...'
+                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/backend/deployment.yml"
+                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/backend/service.yml"
+                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/frontend/deployment.yml"
+                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/frontend/service.yml"
+
+                echo '🔄 Triggering Rolling Restarts...'
+                sh "kubectl rollout restart deployment/apexpos-backend -n ${NAMESPACE}"
+                sh "kubectl rollout restart deployment/apexpos-frontend -n ${NAMESPACE}"
+                
+                echo '🩺 Waiting for deployments to become healthy...'
+                sh "kubectl rollout status deployment/apexpos-backend -n ${NAMESPACE} --timeout=120s"
+                sh "kubectl rollout status deployment/apexpos-frontend -n ${NAMESPACE} --timeout=120s"
             }
         }
     }
 
     post {
         success {
-            echo '✅ Pipeline succeeded — backend deployed to k3s!'
+            script {
+                def nodeIp = sh(script: "kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type==\"InternalIP\")].address}'", returnStdout: true).trim()
+                echo "--------------------------------------------------------"
+                echo "🎉 Pipeline Completed Successfully!"
+                echo "👉 Access Frontend: http://${nodeIp}:30080"
+                echo "👉 Access Backend:  http://${nodeIp}:30500"
+                echo "--------------------------------------------------------"
+            }
         }
         failure {
-            echo '❌ Pipeline failed! Check the logs above.'
+            echo '❌ Pipeline failed! Please check logs.'
         }
         always {
             sh 'docker image prune -f || true'
