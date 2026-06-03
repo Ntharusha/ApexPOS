@@ -21,12 +21,6 @@ const SyncStatus = () => {
         };
     }, []);
 
-    useEffect(() => {
-        if (isOnline && pendingSales.length > 0 && !isSyncing) {
-            syncOfflineData();
-        }
-    }, [isOnline, pendingSales.length]);
-
     const syncOfflineData = async () => {
         setIsSyncing(true);
         console.log(`Attempting to sync ${pendingSales.length} offline sales...`);
@@ -46,7 +40,7 @@ const SyncStatus = () => {
                 } else {
                     failedQueue.push(sale);
                 }
-            } catch (error) {
+            } catch {
                 failedQueue.push(sale);
             }
         }
@@ -66,6 +60,12 @@ const SyncStatus = () => {
 
         setIsSyncing(false);
     };
+
+    useEffect(() => {
+        if (isOnline && pendingSales.length > 0 && !isSyncing) {
+            syncOfflineData();
+        }
+    }, [isOnline, pendingSales.length, isSyncing, syncOfflineData]);
 
     return (
         <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">

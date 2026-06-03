@@ -3,7 +3,27 @@ import { useStore } from '../../store/useStore';
 import api from '../../api/axios';
 
 const SyncEngine = () => {
-    const { isOnline, setOnlineStatus, pendingSales, clearPendingSales, syncOfflineData } = useStore();
+    const { setOnlineStatus, clearPendingSales, syncOfflineData } = useStore();
+
+    const flushQueue = async () => {
+        const { pendingSales, setSyncStatus } = useStore.getState();
+        if (pendingSales.length === 0) return;
+
+        setSyncStatus('syncing');
+
+        for (const sale of pendingSales) {
+            try {
+                await api.post('/sales', sale);
+            } catch (error) {
+                console.error(`Failed to sync sale ${sale.offlineId}`, error);
+                setSyncStatus('error');
+                return;
+            }
+        }
+
+        clearPendingSales();
+        await syncOfflineData();
+    };
 
     useEffect(() => {
         const handleOnline = () => {
@@ -31,27 +51,7 @@ const SyncEngine = () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
-    }, []);
-
-    const flushQueue = async () => {
-        const { pendingSales, setSyncStatus } = useStore.getState();
-        if (pendingSales.length === 0) return;
-
-        setSyncStatus('syncing');
-
-        for (const sale of pendingSales) {
-            try {
-                await api.post('/sales', sale);
-            } catch (error) {
-                console.error(`Failed to sync sale ${sale.offlineId}`, error);
-                setSyncStatus('error');
-                return;
-            }
-        }
-
-        clearPendingSales();
-        await syncOfflineData();
-    };
+    }, [setOnlineStatus, syncOfflineData]);
 
     return null; // This component has no UI, it just manages logic
 };

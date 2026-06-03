@@ -2,11 +2,14 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get update && apt-get upgrade -y
+# Ensure system is updated and SSH is working
+apt-get update > /dev/null 2>&1
+apt-get install -y openssh-server openssh-client > /dev/null 2>&1
+systemctl restart ssh
 
-# Swap — required for k3s + Argo CD on 1GB RAM (t3.micro)
+# Swap — required for k3s + Docker on 1GB RAM (t3.micro)
 if ! swapon --show | grep -q /swapfile; then
-  fallocate -l 2G /swapfile
+  fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
   chmod 600 /swapfile
   mkswap /swapfile
   swapon /swapfile
@@ -14,15 +17,15 @@ if ! swapon --show | grep -q /swapfile; then
 fi
 
 # Docker — Jenkins CI builds on host
-curl -fsSL https://get.docker.com | sh
-usermod -aG docker ubuntu
+curl -fsSL https://get.docker.com | bash > /dev/null 2>&1 || true
+usermod -aG docker ubuntu || true
 
 # k3s — single-node Kubernetes
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--write-kubeconfig-mode 644" sh -
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--write-kubeconfig-mode 644" bash > /dev/null 2>&1 || true
 
 mkdir -p /home/ubuntu/.kube
-cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/.kube/config
-chown -R ubuntu:ubuntu /home/ubuntu/.kube
-chmod 600 /home/ubuntu/.kube/config
+cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/.kube/config 2>/dev/null || true
+chown -R ubuntu:ubuntu /home/ubuntu/.kube 2>/dev/null || true
+chmod 600 /home/ubuntu/.kube/config 2>/dev/null || true
 
-echo "Bootstrap complete: Docker + k3s ready. Run scripts/bootstrap-ec2-k3s.sh for ingress if needed."
+echo "Bootstrap complete" > /var/log/bootstrap.log

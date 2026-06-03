@@ -58,10 +58,6 @@ const Registration = () => {
         name: '', company: '', email: '', phone: '', address: '', productsSupplied: [], paymentTerms: '', status: 'Active'
     });
 
-    useEffect(() => {
-        fetchData();
-    }, [activeTab]);
-
     const fetchData = async () => {
         try {
             if (activeTab === 'staff') {
@@ -81,6 +77,10 @@ const Registration = () => {
             console.error('Failed to fetch data', error);
         }
     };
+
+    useEffect(() => {
+        fetchData();
+    }, [activeTab]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

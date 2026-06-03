@@ -40,3 +40,9 @@ yarn-error.log*
 .idea/
 .DS_Store
 *.swp
+
+# IDE plugins / temporary plans
+.blackbox/
+.continue/
+tfplan
+*tfplan*

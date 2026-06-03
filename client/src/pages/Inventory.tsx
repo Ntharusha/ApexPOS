@@ -40,11 +40,6 @@ const Inventory = () => {
         image: ''
     });
 
-    useEffect(() => {
-        fetchProducts();
-        fetchCategories();
-    }, [posMode]);
-
     const fetchCategories = async () => {
         try {
             const data = await api.get<any[]>(`/categories?mode=${posMode}`);
@@ -63,6 +58,11 @@ const Inventory = () => {
             console.error("Failed to fetch products", error);
         }
     };
+
+    useEffect(() => {
+        fetchProducts();
+        fetchCategories();
+    }, [posMode]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

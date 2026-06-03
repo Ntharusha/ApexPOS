@@ -17,7 +17,7 @@ interface Table {
 }
 
 const TableManagement = () => {
-    const { theme, user, setActiveTable } = useStore();
+    const { user, setActiveTable } = useStore();
     const navigate = useNavigate();
     const [tables, setTables] = useState<Table[]>([]);
     const [loading, setLoading] = useState(true);
@@ -25,10 +25,6 @@ const TableManagement = () => {
     const [showCreateTable, setShowCreateTable] = useState(false);
     const [newTableNo, setNewTableNo] = useState('');
     const [newCapacity, setNewCapacity] = useState(4);
-
-    useEffect(() => {
-        fetchTables();
-    }, []);
 
     const fetchTables = async () => {
         try {
@@ -41,6 +37,10 @@ const TableManagement = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchTables();
+    }, []);
 
     const handleCreateTable = async () => {
         if (!newTableNo) return;

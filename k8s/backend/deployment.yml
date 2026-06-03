@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: tharusha69/apexpos-backend:1
+          image: tharusha69/apexpos-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000

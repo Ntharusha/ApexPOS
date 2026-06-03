@@ -12,26 +12,22 @@ interface Notification {
 }
 
 const Notifications = () => {
-    const { theme, fetchNotifications: updateGlobalCount } = useStore();
+    const { fetchNotifications: updateGlobalCount } = useStore();
     const [notifications, setNotifications] = useState<Notification[]>([]);
-
-    useEffect(() => {
-        fetchNotifications();
-    }, []);
 
     const fetchNotifications = async () => {
         try {
             const res = await fetch('http://localhost:5000/api/notifications');
             const data = await res.json();
             setNotifications(data);
-            // Also update global count
-            const unreadCount = data.filter((n: any) => !n.isRead).length;
-            // Note: We could use updateGlobalCount() but we already have the data here
-            // to avoid an extra fetch.
         } catch (error) {
             console.error('Failed to fetch notifications', error);
         }
     };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
 
     const markAsRead = async (id: string) => {
         try {

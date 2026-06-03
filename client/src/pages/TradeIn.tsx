@@ -26,7 +26,7 @@ const TradeIn = () => {
     ];
 
     const calculateValue = () => {
-        let baseValue = 120000; // Mock base
+        const baseValue = 120000; // Mock base
         const failedChecks = Object.values(condition).filter(v => v === false).length;
         return baseValue - (failedChecks * 20000);
     };

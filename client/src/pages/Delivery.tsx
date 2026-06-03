@@ -29,10 +29,6 @@ const Delivery = () => {
         status: 'Pending'
     });
 
-    useEffect(() => {
-        fetchDeliveries();
-    }, []);
-
     const fetchDeliveries = async () => {
         try {
             const res = await fetch('http://localhost:5000/api/deliveries');
@@ -42,6 +38,10 @@ const Delivery = () => {
             console.error('Failed to fetch deliveries', error);
         }
     };
+
+    useEffect(() => {
+        fetchDeliveries();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,15 +84,6 @@ const Delivery = () => {
 
     const getDeliveriesByStatus = (status: string) => {
         return deliveries.filter(d => d.status === status);
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'In Transit': return 'blue';
-            case 'Delivered': return 'emerald';
-            case 'Cancelled': return 'red';
-            default: return 'amber';
-        }
     };
 
     return (

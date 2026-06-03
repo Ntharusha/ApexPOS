@@ -135,7 +135,7 @@ export const useStore = create<AppState>()(
             addToCart: (product, quantity = 1) => set((state) => {
                 const mode = state.posMode || 'grocery';
                 let updatedCart;
-                let newCarts = { ...state.carts };
+                const newCarts = { ...state.carts };
 
                 if (mode === 'restaurant') {
                     const tableId = state.activeTable?._id || 'walk-in';
@@ -168,7 +168,7 @@ export const useStore = create<AppState>()(
             removeFromCart: (productId) => set((state) => {
                 const mode = state.posMode || 'grocery';
                 let updatedCart;
-                let newCarts = { ...state.carts };
+                const newCarts = { ...state.carts };
 
                 if (mode === 'restaurant') {
                     const tableId = state.activeTable?._id || 'walk-in';
@@ -184,7 +184,7 @@ export const useStore = create<AppState>()(
             updateQuantity: (productId, quantity) => set((state) => {
                 const mode = state.posMode || 'grocery';
                 let updatedCart;
-                let newCarts = { ...state.carts };
+                const newCarts = { ...state.carts };
 
                 const mapItem = (item: CartItem) => {
                     if (item._id === productId) {
@@ -207,7 +207,7 @@ export const useStore = create<AppState>()(
             }),
             clearCart: () => set((state) => {
                 const mode = state.posMode || 'grocery';
-                let newCarts = { ...state.carts };
+                const newCarts = { ...state.carts };
 
                 if (mode === 'restaurant') {
                     const tableId = state.activeTable?._id || 'walk-in';
