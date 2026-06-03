@@ -7,8 +7,14 @@ on:
       - dev
     paths:
       - 'server/**'
+      - 'client/**'
       - 'k8s/**'
       - '.github/workflows/**'
+  workflow_dispatch:   # Allow manual trigger from GitHub UI
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DOCKER_IMAGE: tharusha69/apexpos-backend
@@ -98,7 +104,7 @@ jobs:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     steps:
       - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ env.EC2_HOST }}
           username: ${{ env.EC2_USER }}
