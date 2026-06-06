@@ -1,102 +1,129 @@
-# 🚀 ApexPOS SaaS 
+# 🚀 ApexPOS SaaS — Enterprise Point of Sale (POS) & ERP Platform
 
-**ApexPOS** is a modern, real-time, cloud-based Point of Sale (POS) and business management platform. Designed as a comprehensive SaaS solution, it scales effortlessly from single retail stores to multi-branch businesses and hospitality environments.
+**ApexPOS** is a modern, real-time, cloud-based Point of Sale (POS) and Enterprise Resource Planning (ERP) platform. Designed as a comprehensive SaaS solution, it scales dynamically from single retail outlets to multi-branch franchises, hospitality networks, and service-based businesses.
 
-Built with performance, real-time synchronization, and a premium user experience in mind.
-
----
-
-## ✨ Key Features
-
-- **⚡ Real-Time Synchronization:** Seamless, instant updates across multiple devices and terminals using WebSockets (Socket.IO).
-- **📊 Comprehensive Dashboard & Analytics:** Visualize sales trends, track KPIs, and monitor business health in real-time using interactive charts (Recharts).
-- **🌍 Multilingual Support:** Out-of-the-box internationalization (i18n) for global deployment and diverse staff.
-- **🖨️ Hardware Integration:** Built-in support for receipt printing and barcode scanning.
-- **🔐 Secure & Role-Based Access:** Robust JWT-based authentication and shift management to track cashier sessions securely.
-
-## 🛠️ Specialized Modules
-
-ApexPOS goes beyond basic sales, offering industry-specific modules to run your entire operation:
-- **🛒 Retail Core:** Product variants, categories, inventory management, and fast-checkout POS interface.
-- **🍽️ Hospitality:** Table management, kitchen order routing, and specialized dining workflows.
-- **🔧 Services & Repairs:** Track customer device repairs, status updates, and service billing.
-- **🚚 Delivery Management:** Dispatch orders, track delivery statuses, and manage driver workflows.
-- **💳 Hire Purchase (HP) & Installments:** Manage customer installment plans, tracking, and liabilities.
-- **♻️ Trade-ins:** Handle customer product trade-ins and automatically update inventory.
-- **💸 Financials:** Expense tracking, liabilities management, and detailed end-of-day reporting.
+Built with a focus on high performance, real-time synchronization, and a premium user experience.
 
 ---
 
-## 💻 Tech Stack
+## 🏛️ Application Architecture Diagram
 
-**Frontend (Client)**
-- **Framework:** React 19 + Vite
-- **Styling:** Tailwind CSS + Framer Motion (for fluid micro-animations)
-- **State Management:** Zustand
-- **Routing:** React Router v7
-- **Real-Time:** Socket.IO Client
-- **Data Visualization:** Recharts
-- **Internationalization:** `react-i18next`
+The application leverages a React/Vite client communicating over HTTP REST APIs and real-time WebSockets to a Node/Express backend backed by MongoDB.
 
-**Backend (Server)**
-- **Environment:** Node.js + Express.js
-- **Database:** MongoDB (with Mongoose ORM)
-- **Authentication:** JWT (JSON Web Tokens) & bcryptjs
-- **Real-Time Engine:** Socket.IO
-- **Security:** CORS, Environment variables
+```mermaid
+graph TD
+    Client[React SPA Frontend] -->|HTTP REST APIs| Express[Express.js Server]
+    Client <-->|WebSockets: Socket.IO| Express
+    Express -->|Mongoose ORM| Mongo[(MongoDB Database)]
+    
+    subgraph Frontend Components (Zustand State)
+        Client --> POS[POS Register]
+        Client --> Analytics[Recharts Analytics]
+        Client --> Modules[Modules: HP, Repair, Delivery]
+    end
+    
+    subgraph Backend Security Layers
+        Express --> Helmet[Helmet Header Security]
+        Express --> RateLimit[Express Rate Limiters]
+        Express --> Auth[JWT Token Validator]
+    end
+```
+
+---
+
+## ✨ Key Platform Features
+
+* **⚡ Real-Time Synchronization**: Seamless updates across multiple registers and locations using WebSockets (Socket.IO).
+* **📊 Analytics Dashboard**: Visualize business KPIs, sales trends, and profit margins instantly with interactive graphs (Recharts).
+* **🌍 Internationalization (i18n)**: Out-of-the-box multilingual support for global localization.
+* **🔐 Role-Based Access Control**: JWT-secured sessions with Cashier Shift Management to track cash registers.
+* **🖨️ Hardware Integrations**: Native support for receipt printing and barcode scanner inputs.
+
+---
+
+## 🛠️ Specialized Business Modules
+
+ApexPOS includes specialized industry modules out of the box:
+* **🛒 Retail Core**: Product variants, inventory counts, categories, and fast checkouts.
+* **🍽️ Hospitality**: Table layout design, kitchen routing, and dining workflows.
+* **🔧 Repairs & Services**: Customer device repair progress logs, billing, and status updates.
+* **🚚 Delivery Tracking**: Order dispatch, driver assignments, and delivery statuses.
+* **💳 Hire Purchase (HP) & Installments**: Customer installment calculations, payback tracking, and ledger entries.
+* **♻️ Trade-ins**: Evaluate customer items and trade for store credit instantly.
+
+---
+
+## 💻 Technical Stack
+
+### Frontend Client
+* **Framework**: React 19 + Vite
+* **Styling**: Tailwind CSS + Framer Motion (Fluid Micro-animations)
+* **State Management**: Zustand
+* **Routing**: React Router v7
+* **Sockets**: Socket.IO Client
+* **Visualization**: Recharts
+* **Localization**: `react-i18next`
+
+### Backend Server
+* **Runtime**: Node.js + Express.js
+* **Database**: MongoDB (Mongoose ORM)
+* **Auth**: JWT (JSON Web Tokens) & bcryptjs
+* **Engine**: Socket.IO
+* **Security**: CORS, Helmet security headers, Express Rate Limiters
 
 ---
 
 ## 🚀 Getting Started (Local Development)
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB (Local instance or Atlas Cluster)
+* Node.js (v18 or higher)
+* MongoDB (Local instance or MongoDB Atlas Cluster)
 
-### 1. Clone the repository
+### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/ApexPOS_SaaS_Main.git
-cd ApexPOS_SaaS_Main
+git clone https://github.com/Ntharusha/ApexPOS.git
+cd ApexPOS
 ```
 
-### 2. Backend Setup
+### 2. Backend API Setup
 ```bash
 cd server
 npm install
 ```
-Copy `server/env.example` to `server/.env` and edit:
+Copy `server/.env.example` to `server/.env` and edit configurations:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/apexpos
-JWT_SECRET=your_super_secret_key
-ALLOWED_ORIGINS=http://localhost:5173
+JWT_SECRET=your_super_secret_jwt_key
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:80,http://localhost:30080
 ```
-Start the backend development server:
+Start the backend API development server:
 ```bash
 npm run dev
 ```
 
-### 3. Frontend Setup
+### 3. Frontend Client Setup
 ```bash
-cd client
+cd ../client
 npm install
 ```
-Copy `client/env.example` to `client/.env`:
+Copy `client/.env.example` to `client/.env`:
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
-Start the frontend development server:
+Start the frontend client dev server:
 ```bash
 npm run dev
 ```
+Access the client dashboard at `http://localhost:5173`.
 
 ---
 
 ## ☁️ DevOps Architecture & Production Deployment
 
-For cloud and production deployments, we follow modern DevOps and GitOps methodologies to ensure high availability, security, and automated continuous delivery.
+For cloud environments, the application is containerized and managed via standard Kubernetes configurations and continuous integration.
 
-### 🏛️ DevOps Pipeline & GitOps Flow
+### DevOps Pipeline & GitOps Flow
 
 ```mermaid
 graph LR
@@ -116,7 +143,7 @@ graph LR
     end
 ```
 
-### 💰 Free-Tier Production Cost Optimization
+### Free-Tier Production Cost Optimization
 
 To host this project completely for free during the staging/testing phase, we utilize the following free-tier cloud configurations:
 
