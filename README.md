@@ -144,19 +144,6 @@ graph LR
     end
 ```
 
-### Free-Tier Production Cost Optimization
-
-To host this project completely for free during the staging/testing phase, we utilize the following free-tier cloud configurations:
-
-| Service | Free Tier Details | Duration | Purpose |
-|---------|------------------|----------|---------|
-| **AWS EC2** | 750 hrs/mo of t2.micro/t3.micro | 12 months | Cluster Node Host |
-| **AWS EBS** | 30 GB of gp3 storage | 12 months | Persistence Storage |
-| **MongoDB Atlas** | M0 Cluster (512 MB, Shared) | Always free | Managed Database |
-| **Let's Encrypt** | Certbot TLS Certificates | Always Free | SSL Encryption |
-| **Cloudflare** | DNS & CDN Proxy | Always free | Global Edge Security |
-| **GitHub Packages** | Container Registry (GHCR) | Always free | Image Storage |
-
 ### 📖 Deployment Documentation
 
 Detailed setup guides and orchestration manifests are located here:
