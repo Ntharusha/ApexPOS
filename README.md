@@ -92,28 +92,48 @@ npm run dev
 
 ---
 
-## ☁️ Production Deployment & Future Planning
+## ☁️ DevOps Architecture & Production Deployment
 
-Planning to deploy ApexPOS to production? We have structured a highly optimized architecture to leverage 100% free-tier services. Here is the breakdown of the free services we plan to utilize for our future cloud infrastructure:
+For cloud and production deployments, we follow modern DevOps and GitOps methodologies to ensure high availability, security, and automated continuous delivery.
 
-| Service | Free Tier Details | Duration |
-|---------|------------------|----------|
-| **AWS EC2** | 750 hrs/mo of t2.micro (1 vCPU, 1GB RAM) | 12 months |
-| **AWS EBS** | 30 GB of gp2/gp3 storage | 12 months |
-| **AWS CloudWatch** | 10 custom metrics, 10 alarms, 5GB log ingestion, 3 dashboards | Always free |
-| **AWS Data Transfer** | 100 GB/mo outbound | 12 months |
-| **MongoDB Atlas M0** | 512 MB storage, shared cluster, 100 max connections | Always free |
-| **Vercel Hobby** | 100 GB bandwidth, 100 deployments/day, serverless functions | Always free |
-| **Docker Hub** | 1 private repo, unlimited public repos | Always free |
-| **k3s** | Lightweight Kubernetes (CNCF certified) | Always free (OSS) |
-| **Jenkins** | Open-source CI/CD | Always free (OSS) |
-| **Terraform** | Open-source IaC | Always free (OSS) |
-| **Argo CD** | Open-source GitOps CD | Always free (OSS) |
-| **Let's Encrypt** | Free SSL certificates | Always free |
-| **Cloudflare** | Free DNS + CDN + SSL | Always free |
+### 🏛️ DevOps Pipeline & GitOps Flow
 
-👉 **[Implementation plan (EC2 + k3s + Jenkins CI + Argo CD)](./IMPLEMENTATION_PLAN_EC2_K8S.md)** — phased execution checklist  
-👉 **[Full deployment reference](./ApexPOS_Deployment_Plan_Free_Tier.md)** — commands, manifests, troubleshooting
+```mermaid
+graph LR
+    Dev[Developer] -->|Push Code| GitHub[GitHub Repo]
+    
+    subgraph CI/CD (GitHub Actions)
+        GitHub -->|Trigger CI| Actions[GitHub Actions]
+        Actions -->|Lint & Build FE| FE_Build[Docker Build Frontend]
+        Actions -->|Test & Build BE| BE_Build[Docker Build Backend]
+        FE_Build -->|Push to| GHCR[GitHub Container Registry]
+        BE_Build -->|Push to| GHCR
+    end
+    
+    subgraph Continuous Delivery (Argo CD)
+        GHCR -->|Detect Tag| ArgoCD[Argo CD]
+        ArgoCD -->|Sync State| K3s[k3s Cluster]
+    end
+```
+
+### 💰 Free-Tier Production Cost Optimization
+
+To host this project completely for free during the staging/testing phase, we utilize the following free-tier cloud configurations:
+
+| Service | Free Tier Details | Duration | Purpose |
+|---------|------------------|----------|---------|
+| **AWS EC2** | 750 hrs/mo of t2.micro/t3.micro | 12 months | Cluster Node Host |
+| **AWS EBS** | 30 GB of gp3 storage | 12 months | Persistence Storage |
+| **MongoDB Atlas** | M0 Cluster (512 MB, Shared) | Always free | Managed Database |
+| **Let's Encrypt** | Certbot TLS Certificates | Always Free | SSL Encryption |
+| **Cloudflare** | DNS & CDN Proxy | Always free | Global Edge Security |
+| **GitHub Packages** | Container Registry (GHCR) | Always free | Image Storage |
+
+### 📖 Deployment Documentation
+
+Detailed setup guides and orchestration manifests are located here:
+👉 **[Phased Kubernetes Implementation Plan](./IMPLEMENTATION_PLAN_EC2_K8S.md)** — Step-by-step cluster setup, Terraform scripts, and Argo CD configurations.  
+👉 **[Zero-Cost Deployment Reference](./ApexPOS_Deployment_Plan_Free_Tier.md)** — DNS, Let's Encrypt certificate mounting, and managed database connections.
 
 ---
 

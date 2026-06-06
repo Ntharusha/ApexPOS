@@ -38,6 +38,34 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    echo '🔍 Running SonarQube Analysis...'
+                    sh '''
+                    echo "Waiting for SonarQube to start..."
+                    until curl -s -f http://localhost:9000/api/system/status | grep -q '"status":"UP"'; do
+                        sleep 5
+                    done
+                    echo "SonarQube is UP!"
+                    
+                    # Update admin password from admin:admin to SonarQubeAdmin123_
+                    curl -s -u admin:admin -X POST "http://localhost:9000/api/users/change_password?previousPassword=admin&password=SonarQubeAdmin123_" || echo "Password already changed or SonarQube API unavailable"
+                    
+                    # Run SonarQube scan
+                    npx sonarqube-scanner \
+                      -Dsonar.projectKey=apexpos \
+                      -Dsonar.projectName="ApexPOS" \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=http://localhost:9000 \
+                      -Dsonar.login=admin \
+                      -Dsonar.password=SonarQubeAdmin123_ \
+                      -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**
+                    '''
+                }
+            }
+        }
+
         stage('Build Images') {
             steps {
                 echo '🐳 Building Backend Image...'
