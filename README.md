@@ -13,7 +13,8 @@ The application leverages a React/Vite client communicating over HTTP REST APIs 
 ```mermaid
 graph TD
     Client[React SPA Frontend] -->|HTTP REST APIs| Express[Express.js Server]
-    Client <-->|WebSockets: Socket.IO| Express
+    Client -->|WebSockets: Socket.IO| Express
+    Express -->|WebSockets: Socket.IO| Client
     Express -->|Mongoose ORM| Mongo[(MongoDB Database)]
     
     subgraph "Frontend Components (Zustand State)"
