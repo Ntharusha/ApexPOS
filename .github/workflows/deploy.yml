@@ -1,4 +1,4 @@
-name: CI/CD — Build, Push & Deploy ApexPOS Backend
+name: CI/CD — Build, Push & Deploy ApexPOS SaaS
 
 on:
   push:
@@ -10,22 +10,23 @@ on:
       - 'client/**'
       - 'k8s/**'
       - '.github/workflows/**'
-  workflow_dispatch:   # Allow manual trigger from GitHub UI
+  workflow_dispatch:
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  DOCKER_IMAGE: tharusha69/apexpos-backend
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: apexpos-backend
+  FRONTEND_IMAGE_NAME: apexpos-frontend
   EC2_HOST: 13.206.37.231
   EC2_USER: ubuntu
   NAMESPACE: apexpos
-  DEPLOYMENT: apexpos-backend
 
 jobs:
   # ─────────────────────────────────────────────
-  # Job 1a: Lint & Build client (runs in PARALLEL)
+  # Job 1a: Lint & Build Frontend
   # ─────────────────────────────────────────────
   lint-client:
     name: 🔍 Lint & Build Frontend
@@ -53,7 +54,7 @@ jobs:
         working-directory: client
 
   # ─────────────────────────────────────────────
-  # Job 1b: Validate backend (runs in PARALLEL)
+  # Job 1b: Validate Backend
   # ─────────────────────────────────────────────
   test-backend:
     name: 🧪 Validate Backend
@@ -87,40 +88,91 @@ jobs:
         continue-on-error: true
 
   # ─────────────────────────────────────────────
-  # Job 2: Build & Push Docker image (waits for BOTH)
+  # Job 2a: Build & Push Backend Docker Image
   # ─────────────────────────────────────────────
-  build-push:
-    name: 🐳 Build & Push Docker Image
+  build-push-backend:
+    name: 🐳 Build & Push Backend
     runs-on: ubuntu-latest
-    needs: [lint-client, test-backend]   # Parallel gate — both must pass
-    outputs:
-      image_tag: ${{ steps.meta.outputs.version }}
+    needs: test-backend
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Downcase Repository Owner for GHCR
+        id: owner
+        run: echo "owner=${OWNER,,}" >> $GITHUB_OUTPUT
+        env:
+          OWNER: ${{ github.repository_owner }}
 
       - name: Extract Docker metadata (tags & labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.DOCKER_IMAGE }}
+          images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.owner }}/${{ env.BACKEND_IMAGE_NAME }}
           tags: |
             type=sha,prefix=,suffix=,format=short
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
-      - name: Build and push Docker image
+      - name: Build and push Backend image
         uses: docker/build-push-action@v5
         with:
           context: ./server
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────────
+  # Job 2b: Build & Push Frontend Docker Image
+  # ─────────────────────────────────────────────
+  build-push-frontend:
+    name: 🐳 Build & Push Frontend
+    runs-on: ubuntu-latest
+    needs: lint-client
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Downcase Repository Owner for GHCR
+        id: owner
+        run: echo "owner=${OWNER,,}" >> $GITHUB_OUTPUT
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Extract Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.owner }}/${{ env.FRONTEND_IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=,suffix=,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -133,7 +185,7 @@ jobs:
   deploy:
     name: 🚀 Deploy to EC2 k3s
     runs-on: ubuntu-latest
-    needs: build-push
+    needs: [build-push-backend, build-push-frontend]
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     steps:
@@ -145,33 +197,43 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             set -e
-            echo "🔄 Pulling latest image and restarting deployment..."
-            sudo kubectl rollout restart deployment/${{ env.DEPLOYMENT }} -n ${{ env.NAMESPACE }}
-            echo "⏳ Waiting for rollout to complete..."
-            sudo kubectl rollout status deployment/${{ env.DEPLOYMENT }} -n ${{ env.NAMESPACE }} --timeout=180s
-            echo "✅ Rollout successful!"
+            echo "🔄 Restarting deployments to pull latest images..."
+            sudo kubectl rollout restart deployment/apexpos-backend -n ${{ env.NAMESPACE }}
+            sudo kubectl rollout restart deployment/apexpos-frontend -n ${{ env.NAMESPACE }}
+            
+            echo "⏳ Waiting for rollouts to complete..."
+            sudo kubectl rollout status deployment/apexpos-backend -n ${{ env.NAMESPACE }} --timeout=180s
+            sudo kubectl rollout status deployment/apexpos-frontend -n ${{ env.NAMESPACE }} --timeout=180s
+            echo "✅ Deployment successful!"
 
       - name: Backend health check
         run: |
           echo "Running health check on http://${{ env.EC2_HOST }}:30500/"
-          sleep 10
+          sleep 15
           curl -f --retry 5 --retry-delay 5 http://${{ env.EC2_HOST }}:30500/ || exit 1
           echo "✅ Backend is healthy!"
 
+      - name: Frontend health check
+        run: |
+          echo "Running health check on http://${{ env.EC2_HOST }}:30080/"
+          curl -f --retry 5 --retry-delay 5 http://${{ env.EC2_HOST }}:30080/ || exit 1
+          echo "✅ Frontend is healthy!"
+
   # ─────────────────────────────────────────────
-  # Job 4: Notify success/failure
+  # Job 4: Notify status
   # ─────────────────────────────────────────────
   notify:
-    name: 📣 Notify
+    name: 📣 Notify Status
     runs-on: ubuntu-latest
-    needs: [build-push, deploy]
+    needs: [build-push-backend, build-push-frontend, deploy]
     if: always()
     steps:
       - name: Pipeline status
         run: |
           if [ "${{ needs.deploy.result }}" == "success" ]; then
             echo "✅ Deployment to EC2 succeeded!"
-            echo "🌐 Backend: http://${{ env.EC2_HOST }}:30500/"
+            echo "🌐 Frontend: http://${{ env.EC2_HOST }}:30080"
+            echo "🌐 Backend API: http://${{ env.EC2_HOST }}:30500"
           else
             echo "❌ Deployment failed — check the logs above."
             exit 1
