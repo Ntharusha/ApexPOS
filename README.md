@@ -165,6 +165,37 @@ Detailed setup guides and orchestration manifests are located here:
 
 ---
 
+## 🔄 How to Work This System (Workflow)
+
+This system is divided into two distinct repositories to separate your application logic from your DevOps infrastructure. Here is the day-to-day workflow:
+
+### 1. Making Application Changes (Frontend/Backend)
+* **Local Development**:
+  1. Open your code in `ApexPOS` on your local machine.
+  2. Start the backend (`cd server && npm run dev`) and frontend (`cd client && npm run dev`) to test features locally.
+* **Production Deployment**:
+  1. Stage, commit, and push your changes:
+     ```bash
+     git add .
+     git commit -m "feat: add new transaction modules"
+     git push origin dev
+     ```
+  2. **CI/CD Automation**: GitHub Actions runs automatically to lint code, compile Docker containers, push the new images to GitHub Packages (`ghcr.io`), and trigger a zero-downtime rolling restart in your Kubernetes cluster.
+
+### 2. Making Infrastructure/DevOps Changes
+* If you need to modify server specs, Kubernetes configurations, or Helm charts:
+  1. Open the [devops-repo](https://github.com/Ntharusha/ApexPos_Devops) sibling directory.
+  2. Make changes to Terraform scripts, Helm templates (`values.yaml`), or Kubernetes manifests.
+  3. Push changes to GitHub:
+     ```bash
+     git add .
+     git commit -m "config: increase backend memory allocation"
+     git push origin main
+     ```
+  4. **GitOps Automation**: **Argo CD** automatically detects your changes, pulls the new manifests, and synchronizes the cluster state without you ever needing to run manual deployment commands!
+
+---
+
 ## 📄 License
 
 This project is proprietary and confidential. Unauthorized copying of files, via any medium, is strictly prohibited.
