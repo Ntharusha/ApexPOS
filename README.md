@@ -16,13 +16,13 @@ graph TD
     Client <-->|WebSockets: Socket.IO| Express
     Express -->|Mongoose ORM| Mongo[(MongoDB Database)]
     
-    subgraph Frontend Components (Zustand State)
+    subgraph "Frontend Components (Zustand State)"
         Client --> POS[POS Register]
         Client --> Analytics[Recharts Analytics]
         Client --> Modules[Modules: HP, Repair, Delivery]
     end
     
-    subgraph Backend Security Layers
+    subgraph "Backend Security Layers"
         Express --> Helmet[Helmet Header Security]
         Express --> RateLimit[Express Rate Limiters]
         Express --> Auth[JWT Token Validator]
@@ -129,7 +129,7 @@ For cloud environments, the application is containerized and managed via standar
 graph LR
     Dev[Developer] -->|Push Code| GitHub[GitHub Repo]
     
-    subgraph CI/CD (GitHub Actions)
+    subgraph "CI/CD (GitHub Actions)"
         GitHub -->|Trigger CI| Actions[GitHub Actions]
         Actions -->|Lint & Build FE| FE_Build[Docker Build Frontend]
         Actions -->|Test & Build BE| BE_Build[Docker Build Backend]
@@ -137,7 +137,7 @@ graph LR
         BE_Build -->|Push to| GHCR
     end
     
-    subgraph Continuous Delivery (Argo CD)
+    subgraph "Continuous Delivery (Argo CD)"
         GHCR -->|Detect Tag| ArgoCD[Argo CD]
         ArgoCD -->|Sync State| K3s[k3s Cluster]
     end
