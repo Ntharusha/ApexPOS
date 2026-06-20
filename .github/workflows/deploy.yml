@@ -1,4 +1,4 @@
-name: CI/CD — Build, Push & Deploy ApexPOS SaaS
+name: Build and Deploy
 
 on:
   push:
@@ -25,11 +25,9 @@ env:
   NAMESPACE: apexpos
 
 jobs:
-  # ─────────────────────────────────────────────
-  # Job 1a: Lint & Build Frontend
-  # ─────────────────────────────────────────────
+  # Lint & Build Frontend React Client
   lint-client:
-    name: 🔍 Lint & Build Frontend
+    name: Build Frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,11 +51,9 @@ jobs:
         run: npm run build
         working-directory: client
 
-  # ─────────────────────────────────────────────
-  # Job 1b: Validate Backend
-  # ─────────────────────────────────────────────
+  # Validate Express Backend API
   test-backend:
-    name: 🧪 Validate Backend
+    name: Test Backend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,25 +69,23 @@ jobs:
         run: npm ci
         working-directory: server
 
-      - name: Syntax check all JS files
+      - name: Check JavaScript syntax
         run: |
-          echo "🔍 Checking JavaScript syntax..."
+          echo "Checking JavaScript syntax..."
           find . -name '*.js' -not -path './node_modules/*' | while read f; do
             node --check "$f" || exit 1
           done
-          echo "✅ All files pass syntax check"
+          echo "All JS files passed syntax check"
         working-directory: server
 
       - name: Run tests
-        run: npm test --if-present || echo "⚠️ No tests configured yet"
+        run: npm test --if-present || echo "No tests configured yet"
         working-directory: server
         continue-on-error: true
 
-  # ─────────────────────────────────────────────
-  # Job 2a: Build & Push Backend Docker Image
-  # ─────────────────────────────────────────────
+  # Build & Push Backend Docker Image
   build-push-backend:
-    name: 🐳 Build & Push Backend
+    name: Build and Push Backend
     runs-on: ubuntu-latest
     needs: test-backend
     steps:
@@ -113,7 +107,7 @@ jobs:
         env:
           OWNER: ${{ github.repository_owner }}
 
-      - name: Extract Docker metadata (tags & labels)
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -133,11 +127,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─────────────────────────────────────────────
-  # Job 2b: Build & Push Frontend Docker Image
-  # ─────────────────────────────────────────────
+  # Build & Push Frontend Docker Image
   build-push-frontend:
-    name: 🐳 Build & Push Frontend
+    name: Build and Push Frontend
     runs-on: ubuntu-latest
     needs: lint-client
     steps:
@@ -159,7 +151,7 @@ jobs:
         env:
           OWNER: ${{ github.repository_owner }}
 
-      - name: Extract Docker metadata (tags & labels)
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -179,11 +171,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─────────────────────────────────────────────
-  # Job 3: Deploy to EC2 k3s cluster
-  # ─────────────────────────────────────────────
+  # Deploy to EC2 k3s cluster
   deploy:
-    name: 🚀 Deploy to EC2 k3s
+    name: Deploy to EC2
     runs-on: ubuntu-latest
     needs: [build-push-backend, build-push-frontend]
     environment:
@@ -197,44 +187,42 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             set -e
-            echo "🔄 Restarting deployments to pull latest images..."
+            echo "Rolling out deployments to pull latest images..."
             sudo kubectl rollout restart deployment/apexpos-backend -n ${{ env.NAMESPACE }}
             sudo kubectl rollout restart deployment/apexpos-frontend -n ${{ env.NAMESPACE }}
             
-            echo "⏳ Waiting for rollouts to complete..."
+            echo "Waiting for rollout to complete..."
             sudo kubectl rollout status deployment/apexpos-backend -n ${{ env.NAMESPACE }} --timeout=180s
             sudo kubectl rollout status deployment/apexpos-frontend -n ${{ env.NAMESPACE }} --timeout=180s
-            echo "✅ Deployment successful!"
+            echo "Deployment rollout success."
 
       - name: Backend health check
         run: |
-          echo "Running health check on http://${{ env.EC2_HOST }}:30500/"
+          echo "Checking backend health endpoint..."
           sleep 15
           curl -f --retry 5 --retry-delay 5 http://${{ env.EC2_HOST }}:30500/ || exit 1
-          echo "✅ Backend is healthy!"
+          echo "Backend service is healthy."
 
       - name: Frontend health check
         run: |
-          echo "Running health check on http://${{ env.EC2_HOST }}:30080/"
+          echo "Checking frontend health endpoint..."
           curl -f --retry 5 --retry-delay 5 http://${{ env.EC2_HOST }}:30080/ || exit 1
-          echo "✅ Frontend is healthy!"
+          echo "Frontend service is healthy."
 
-  # ─────────────────────────────────────────────
-  # Job 4: Notify status
-  # ─────────────────────────────────────────────
+  # Notify deployment status
   notify:
-    name: 📣 Notify Status
+    name: Notify Status
     runs-on: ubuntu-latest
     needs: [build-push-backend, build-push-frontend, deploy]
     if: always()
     steps:
-      - name: Pipeline status
+      - name: Check pipeline result
         run: |
           if [ "${{ needs.deploy.result }}" == "success" ]; then
-            echo "✅ Deployment to EC2 succeeded!"
-            echo "🌐 Frontend: http://${{ env.EC2_HOST }}:30080"
-            echo "🌐 Backend API: http://${{ env.EC2_HOST }}:30500"
+            echo "Deployment succeeded."
+            echo "Frontend URL: http://${{ env.EC2_HOST }}:30080"
+            echo "Backend URL: http://${{ env.EC2_HOST }}:30500"
           else
-            echo "❌ Deployment failed — check the logs above."
+            echo "Deployment failed."
             exit 1
           fi
