@@ -16,6 +16,10 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE_NAME: apexpos-backend
