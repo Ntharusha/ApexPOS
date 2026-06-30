@@ -16,11 +16,15 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE_NAME: apexpos-backend
   FRONTEND_IMAGE_NAME: apexpos-frontend
-  EC2_HOST: 13.206.37.231
+  EC2_HOST: 13.235.9.45
   EC2_USER: ubuntu
   NAMESPACE: apexpos
 
@@ -168,6 +172,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_API_URL=/api
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

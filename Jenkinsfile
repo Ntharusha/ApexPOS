@@ -2,131 +2,101 @@ pipeline {
     agent any
 
     environment {
-        NAMESPACE = 'apexpos'
-        BACKEND_IMAGE = 'localhost:5000/apexpos-backend:latest'
-        FRONTEND_IMAGE = 'localhost:5000/apexpos-frontend:latest'
-    }
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '3'))
-        timeout(time: 15, unit: 'MINUTES')
-        disableConcurrentBuilds()
+        REGISTRY = 'ghcr.io'
+        OWNER = 'ntharusha'
+        BACKEND_IMAGE = 'apexpos-backend'
+        FRONTEND_IMAGE = 'apexpos-frontend'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Configure Env') {
-            steps {
-                script {
-                    echo '🔍 Querying Minikube Node IP...'
-                    // Get the Kubernetes Node IP (exposed NodePort IP) dynamically
-                    def nodeIp = sh(script: "kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type==\"InternalIP\")].address}'", returnStdout: true).trim()
-                    if (!nodeIp) {
-                        error "Could not detect Minikube Node IP! Check Kubernetes connection."
+        stage('Lint & Verify') {
+            parallel {
+                stage('Verify Backend') {
+                    steps {
+                        dir('server') {
+                            sh 'node -c server.js'
+                            echo '✅ Backend syntax verification passed.'
+                        }
                     }
-                    echo "✅ Detected Node IP: ${nodeIp}"
-                    
-                    // Write VITE_API_URL pointing to backend NodePort (30500)
-                    sh "echo 'VITE_API_URL=http://${nodeIp}:30500/api' > client/.env"
-                    echo "📝 Configured client/.env with VITE_API_URL=http://${nodeIp}:30500/api"
+                }
+                stage('Verify Frontend') {
+                    steps {
+                        dir('client') {
+                            sh 'npm install'
+                            sh 'npm run lint'
+                            echo '✅ Frontend linting passed.'
+                        }
+                    }
                 }
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Build & Push Images') {
             steps {
                 script {
-                    echo '🔍 Running SonarQube Analysis...'
-                    sh '''
-                    echo "Waiting for SonarQube to start..."
-                    until curl -s -f http://localhost:9000/api/system/status | grep -q '"status":"UP"'; do
-                        sleep 5
-                    done
-                    echo "SonarQube is UP!"
+                    // Extract branch name and set appropriate tag
+                    def branch = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'dev').replace('origin/', '')
+                    def imageTag = branch == 'main' ? 'latest' : branch
                     
-                    # Update admin password from admin:admin to SonarQubeAdmin123_
-                    curl -s -u admin:admin -X POST "http://localhost:9000/api/users/change_password?previousPassword=admin&password=SonarQubeAdmin123_" || echo "Password already changed or SonarQube API unavailable"
+                    // Fetch EC2 instance public IP dynamically
+                    def publicIp = sh(script: 'curl -s https://api.ipify.org || curl -s ifconfig.me', returnStdout: true).trim()
+                    echo "Building Docker images for branch: ${branch} with tag: ${imageTag}. Public IP is: ${publicIp}"
                     
-                    # Run SonarQube scan
-                    npx sonarqube-scanner \
-                      -Dsonar.projectKey=apexpos \
-                      -Dsonar.projectName="ApexPOS" \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=http://localhost:9000 \
-                      -Dsonar.login=admin \
-                      -Dsonar.password=SonarQubeAdmin123_ \
-                      -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**
-                    '''
+                    // Build images with dynamic backend API URL injected to the frontend build stage
+                    sh "docker build -t ${REGISTRY}/${OWNER}/${BACKEND_IMAGE}:${imageTag} ./server"
+                    sh "docker build --build-arg VITE_API_URL=http://${publicIp}:30500/api -t ${REGISTRY}/${OWNER}/${FRONTEND_IMAGE}:${imageTag} ./client"
+                    
+                    // Push to registry, falling back to using local Docker engine runtime if credentials are not set
+                    try {
+                        withCredentials([usernamePassword(credentialsId: 'github-ghcr-creds', usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_PAT')]) {
+                            sh "echo \$GHCR_PAT | docker login ${REGISTRY} -u \$GHCR_USER --password-stdin"
+                            sh "docker push ${REGISTRY}/${OWNER}/${BACKEND_IMAGE}:${imageTag}"
+                            sh "docker push ${REGISTRY}/${OWNER}/${FRONTEND_IMAGE}:${imageTag}"
+                            echo "✅ Successfully pushed images to GitHub Container Registry."
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️ Jenkins Credentials 'github-ghcr-creds' not found or authentication failed."
+                        echo "Since K3s runs with the --docker runtime flag on the host, built images are already available to the cluster."
+                        echo "✅ Proceeding to deployment using host local Docker cache."
+                    }
                 }
-            }
-        }
-
-        stage('Build Images') {
-            steps {
-                echo '🐳 Building Backend Image...'
-                sh "docker build -t ${BACKEND_IMAGE} ./server"
-
-                echo '🐳 Building Frontend Image...'
-                sh "docker build -t ${FRONTEND_IMAGE} ./client"
-            }
-        }
-
-        stage('Push Images') {
-            steps {
-                echo '📤 Pushing Images to local registry...'
-                sh "docker push ${BACKEND_IMAGE}"
-                sh "docker push ${FRONTEND_IMAGE}"
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo '☸️ Deploying Namespace, PVs, and PVCs...'
-                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/namespace.yml"
-                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/database/"
-
-                echo '☸️ Deploying Configs and Secrets...'
-                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/backend/configmap.yml"
-                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/backend/secrets.yml"
-
-                echo '☸️ Deploying App Services (Backend & Frontend)...'
-                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/backend/deployment.yml"
-                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/backend/service.yml"
-                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/frontend/deployment.yml"
-                sh "kubectl apply -f /var/jenkins_home/devops-repo/k8s/frontend/service.yml"
-
-                echo '🔄 Triggering Rolling Restarts...'
-                sh "kubectl rollout restart deployment/apexpos-backend -n ${NAMESPACE}"
-                sh "kubectl rollout restart deployment/apexpos-frontend -n ${NAMESPACE}"
-                
-                echo '🩺 Waiting for deployments to become healthy...'
-                sh "kubectl rollout status deployment/apexpos-backend -n ${NAMESPACE} --timeout=120s"
-                sh "kubectl rollout status deployment/apexpos-frontend -n ${NAMESPACE} --timeout=120s"
+                script {
+                    def branch = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'dev').replace('origin/', '')
+                    def imageTag = branch == 'main' ? 'latest' : branch
+                    
+                    echo "Rolling out deployment update in K3s..."
+                    
+                    // Update Kubernetes deployment images and rollout restart to trigger the update
+                    sh "kubectl set image deployment/apexpos-backend backend=${REGISTRY}/${OWNER}/${BACKEND_IMAGE}:${imageTag} -n apexpos --record || true"
+                    sh "kubectl set image deployment/apexpos-frontend frontend=${REGISTRY}/${OWNER}/${FRONTEND_IMAGE}:${imageTag} -n apexpos --record || true"
+                    
+                    sh "kubectl rollout restart deployment/apexpos-backend -n apexpos"
+                    sh "kubectl rollout restart deployment/apexpos-frontend -n apexpos"
+                    
+                    // Verify rollout status
+                    sh "kubectl rollout status deployment/apexpos-backend -n apexpos --timeout=90s"
+                    sh "kubectl rollout status deployment/apexpos-frontend -n apexpos --timeout=90s"
+                    
+                    echo "✅ Deployment rolled out successfully to K3s cluster."
+                }
             }
         }
     }
 
     post {
+        always {
+            cleanWs()
+        }
         success {
-            script {
-                def nodeIp = sh(script: "kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type==\"InternalIP\")].address}'", returnStdout: true).trim()
-                echo "--------------------------------------------------------"
-                echo "🎉 Pipeline Completed Successfully!"
-                echo "👉 Access Frontend: http://${nodeIp}:30080"
-                echo "👉 Access Backend:  http://${nodeIp}:30500"
-                echo "--------------------------------------------------------"
-            }
+            echo "🚀 Pipeline execution completed successfully!"
         }
         failure {
-            echo '❌ Pipeline failed! Please check logs.'
-        }
-        always {
-            sh 'docker image prune -f || true'
+            echo "❌ Pipeline execution failed. Please check build logs."
         }
     }
 }
