@@ -6,7 +6,7 @@ import App from './App'
 // Global Fetch Interceptor to dynamic resolve hardcoded localhost backend URLs to VITE_API_URL
 const originalFetch = window.fetch;
 window.fetch = function (input, init) {
-    let url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
+    const url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
     if (url.includes('http://localhost:5000')) {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         const baseUrl = apiBase.replace(/\/api$/, '').replace(/\/$/, '');
