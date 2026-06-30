@@ -6,7 +6,7 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.0-green.svg?logo=mongodb)](https://www.mongodb.com/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](#)
 
-**ApexPOS** is a modern, real-time, cloud-native Software-as-a-Service (SaaS) Point of Sale (POS) and Enterprise Resource Planning (ERP) platform. Designed for high performance and reliability, it enables businesses to seamlessly scale from single retail outlets to multi-branch franchises, hospitality networks, and service-oriented enterprises.
+**ApexPOS** is a modern, real-time, cloud-native Software-as-a-Service (SaaS) Point of Sale (POS) and Enterprise Resource Planning (ERP) platform. Designed for high performance, dual-tax compliance, and seamless multi-branch scalability.
 
 ---
 
@@ -68,37 +68,89 @@ graph TD
 
 ---
 
-## ✨ Key Platform Features
+## ⚡ Real-Time Socket.IO Synchronization Flow
 
-* **⚡ Real-Time Synchronized Registers**: All transactions, inventory updates, and cash drawer actions sync instantly across all branch registers using Socket.IO.
-* **📊 Live Rich Analytics**: Business intelligence dashboard utilizing customized `recharts` to track revenue, sales counts, profit margins, and peak hours.
-* **🌐 Dynamic Localization**: Full multilingual localization powered by `react-i18next` for seamless global usability.
-* **🔐 Role-Based Access Control (RBAC)**: Secure access restrictions for different roles (`super_admin`, `branch_admin`, `manager`, `cashier`, `accountant`, `Technician`) with secure JWT cookies.
-* **💸 Dual-Tax Support**: Built-in support for calculations of standard Value Added Tax (VAT) and Social Security Contribution Levy (SSCL) tailored for retail sales.
-* **🤝 Business-Specific Add-ons**: Built-in specialized interfaces for mobile repairs, installment sales ledger management, restaurant order routing, and delivery management.
+All transactions, inventory status, and active cash register drawer shifts are synchronized live across cashiers and managers using WebSocket events.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor CashierA as 🛒 Cashier A (Terminal 01)
+    participant Server as 🔌 Express Server (Socket.IO)
+    actor CashierB as 🛒 Cashier B (Terminal 02)
+    actor Manager as 📊 Manager Dashboard
+
+    CashierA->>Server: Process Sale (Emit "new-transaction")
+    Server->>Server: Update Inventory in MongoDB
+    Server-->>CashierA: Acknowledge Success & Print Receipt
+    Server-->>CashierB: Broadcast "stock-updated" (Live Sync UI)
+    Server-->>Manager: Broadcast "revenue-updated" (Real-time charts update)
+```
 
 ---
 
-## 💻 Tech Stack Breakdown
+## 🍃 MongoDB Entity Relationship (ER) Model
 
-### Frontend Client
-* **Core**: React 19, TypeScript, Vite
-* **Styling**: Framer Motion (Fluid Micro-animations & Transitions) + TailwindCSS
-* **State Management**: Zustand (Global light-weight reactive store)
-* **Routing**: React Router v7
-* **Networking**: Axios, Socket.IO Client
-* **Analytics**: Recharts
-* **Localization**: `react-i18next`
+The database architecture consists of highly optimized relational models managed via Mongoose ORM.
 
-### Backend API Server
-* **Runtime**: Node.js & Express.js
-* **Database**: MongoDB (utilizing Mongoose ORM models)
-* **Realtime**: Socket.IO Engine
-* **Security & Auditing**:
-  * Helmet (secure HTTP headers)
-  * express-rate-limit (DDOS mitigation)
-  * bcryptjs (secure salt-round hashing)
-  * JSON Web Tokens (session encryption)
+```mermaid
+erDiagram
+    STAFF ||--o{ SHIFT : "manages"
+    PRODUCT }|--|| CATEGORY : "belongs to"
+    SALE ||--|{ SALE_ITEM : "contains"
+    SALE_ITEM }|--|| PRODUCT : "references"
+    SALE }|--|| CUSTOMER : "purchased by"
+    ORDER ||--o{ ORDER_ITEM : "contains"
+    ORDER_ITEM }|--|| PRODUCT : "references"
+    ORDER }|--|| TABLE : "placed at"
+    HIRE_PURCHASE ||--o{ INSTALLMENT_PLAN : "has"
+
+    STAFF {
+        ObjectId id
+        string name
+        string email
+        string role
+        string pin_hash
+        string branch_id
+    }
+    SHIFT {
+        ObjectId id
+        ObjectId cashierId
+        float openingFloat
+        float expectedCash
+        float actualCash
+        string status
+    }
+    PRODUCT {
+        ObjectId id
+        string name
+        float price
+        int stock
+        string barcode
+    }
+    SALE {
+        ObjectId id
+        float grandTotal
+        float vatAmount
+        float ssclAmount
+        string paymentStatus
+        string cashierName
+    }
+```
+
+---
+
+## ✨ Key Platform Features
+
+*   **⚡ Real-Time Synchronized Registers**: Multi-terminal registers synchronize state changes, cash float updates, and order placements instantly.
+*   **📊 Live Rich Analytics**: Interactive business intelligence dashboard built with `recharts` for calculating revenue, gross profit, and peak transactions.
+*   **🌐 Dynamic Localization**: Dynamic localization switching powered by `react-i18next` for seamless multi-language compatibility.
+*   **🔐 Role-Based Access Control (RBAC)**: Fine-grained user role permissions (`super_admin`, `branch_admin`, `manager`, `cashier`, `accountant`, `Technician`) backed by JSON Web Tokens.
+*   **💸 Dual-Tax Support**: Sri Lankan tax compliant computation engine calculating Value Added Tax (**VAT - 18%**) and Social Security Contribution Levy (**SSCL - 2.5%**).
+*   **🤝 Specialized Industry Add-ons**:
+    *   **Mobile Repairs & Service Logs**: IMEI logs, estimated repair costs, status tracking, and technician signature liability pads.
+    *   **Hire Purchase & Installments**: Installment plan scheduler, down payments, and due collections ledger.
+    *   **Restaurant KOT & Table Management**: Live table status mapping (Available/Occupied/Reserved) and Kitchen Order Tickets (KOT) routing.
 
 ---
 
@@ -150,8 +202,6 @@ Open **`http://localhost:5173`** in your browser.
 
 ## 📂 Seed Scripts & Admin Credentials
 
-To quickly populate the platform with sample data for demonstration, you can run the built-in seed scripts.
-
 ### Running Seed Scripts
 From the `server/` directory:
 
@@ -165,40 +215,8 @@ From the `server/` directory:
    ```
 
 ### Default Credentials
-* **Super Admin Login**:
-  * **Email**: `admin@apexpos.com`
-  * **Password**: `admin123`
-* **Fast Cashier Terminal Access**:
-  * **PIN**: `1234`
-
----
-
-## 🔄 CI/CD & Deployment Pipeline
-
-This application codebase is designed for continuous deployment via a **declarative Jenkinsfile** located in the root directory.
-
-### Build and Test Pipeline Flow
-```mermaid
-graph LR
-    classDef git fill:#f05032,stroke:#333,stroke-width:1px,color:#fff;
-    classDef pipeline fill:#14a2ba,stroke:#333,stroke-width:1px,color:#fff;
-    classDef deploy fill:#326ce5,stroke:#333,stroke-width:1px,color:#fff;
-
-    Commit[💻 Developer Push]:::git --> GitSCM[📁 GitHub Repo]:::git
-    GitSCM -->|Webhook / Polling| Jenkins[⚙️ Jenkins Runner]:::pipeline
-    
-    subgraph Pipeline Stages ["Jenkins CI/CD Stages"]
-        Lint[🧹 Lint & Verify]:::pipeline
-        DockerBuild[🐳 Build & Cache Images]:::pipeline
-        PushRegistry[📤 Push to Registry - Optional]:::pipeline
-        Rollout[🚀 K3s Deployment Restart]:::deploy
-    end
-
-    Jenkins --> Lint
-    Lint --> DockerBuild
-    DockerBuild --> PushRegistry
-    PushRegistry --> Rollout
-```
-
-Detailed Infrastructure configurations (Kubernetes files, Helm charts, Terraform configurations) can be found in the sibling repository:  
-👉 **[ApexPOS DevOps Infrastructure Repository](https://github.com/Ntharusha/ApexPos_Devops)**
+*   **Super Admin Dashboard Access**:
+    *   **Email**: `admin@apexpos.com`
+    *   **Password**: `admin123`
+*   **Fast Cashier Terminal Access**:
+    *   **PIN**: `1234`
