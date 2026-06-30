@@ -87,7 +87,7 @@ const NewStaffModal: React.FC<NewStaffModalProps> = ({ isOpen, onClose, onSucces
                                 </div>
                                 <div>
                                     <h2 className="text-xl font-black text-text">New Staff Account</h2>
-                                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-0.5">CeylonPOS · Authentication Setup</p>
+                                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-0.5">ApexPOS · Authentication Setup</p>
                                 </div>
                             </div>
                             <button onClick={onClose} className="p-2.5 rounded-2xl hover:bg-text/5 text-text-muted hover:text-text transition-all">

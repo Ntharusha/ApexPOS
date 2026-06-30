@@ -1,5 +1,5 @@
 /**
- * CeylonPOS Tax Engine
+ * ApexPOS Tax Engine
  * Sri Lanka Tax Compliance: VAT 18% + SSCL 2.5%
  *
  * References:

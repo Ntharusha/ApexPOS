@@ -186,7 +186,7 @@ const ShiftModal: React.FC<ShiftModalProps> = ({ isOpen, onClose }) => {
                                 )}
                             </button>
                             <p className="text-[9px] text-center text-text-muted font-bold uppercase tracking-widest mt-5">
-                                CeylonPOS · Secure Cash Management System
+                                ApexPOS · Secure Cash Management System
                             </p>
                         </div>
                     </motion.div>

@@ -135,8 +135,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>((props, ref) => {
                 </div>
                 <div style={{ fontSize: '9px', fontWeight: 'bold' }}>LankaQR Enabled Payment</div>
                 <div style={{ marginTop: '8px' }}>Thank you for your purchase!</div>
-                <div>Please come again 🙏</div>
-                <div style={{ marginTop: '6px', fontSize: '9px', color: '#555' }}>Powered by ApexPOS | System by Antigravity</div>
+                <div style={{ marginTop: '6px', fontSize: '9px', color: '#555' }}>Powered by ApexPOS | Secure POS Solution</div>
             </div>
         </div>
     );

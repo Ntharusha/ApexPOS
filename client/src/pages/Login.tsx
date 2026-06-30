@@ -121,7 +121,7 @@ const Login = () => {
                     <h1 className={`text-5xl font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'} tracking-tight`}>
                         ApexPOS
                     </h1>
-                    <p className="text-text-muted font-medium mt-2 text-sm">CeylonPOS Enterprise Platform</p>
+                    <p className="text-text-muted font-medium mt-2 text-sm">ApexPOS Enterprise Platform</p>
                 </div>
 
                 {/* Card */}
@@ -264,7 +264,7 @@ const Login = () => {
 
                 {/* Footer */}
                 <p className="text-center text-[10px] text-text-muted/40 mt-6 font-bold uppercase tracking-widest">
-                    CeylonPOS v2.0 · Sri Lanka VAT/SSCL Compliant · Powered by Antigravity
+                    ApexPOS v1.0 · Sri Lanka VAT/SSCL Compliant · Secure Enterprise POS
                 </p>
             </motion.div>
         </div>
