@@ -34,7 +34,8 @@ const Dashboard = () => {
         fetchStats();
         fetch('http://localhost:5000/api/dashboard/sales-trend').then(res => res.json()).then(setSalesTrend);
         fetch('http://localhost:5000/api/dashboard/recent-activity').then(res => res.json()).then(setRecentActivity);
-        const socket = io('http://localhost:5000');
+        const socketUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') : 'http://localhost:5000';
+        const socket = io(socketUrl);
         socket.on('dashboardUpdate', fetchStats);
         return () => { socket.disconnect(); };
     }, []);

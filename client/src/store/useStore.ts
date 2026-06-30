@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 export interface Product {
     _id: string;
     name: string;
@@ -117,7 +119,7 @@ export const useStore = create<AppState>()(
 
             fetchNotifications: async () => {
                 try {
-                    const res = await fetch('http://localhost:5000/api/notifications');
+                    const res = await fetch(`${API_BASE}/notifications`);
                     const data = await res.json();
                     const unreadCount = data.filter((n: any) => !n.isRead).length;
                     set({ notifications: unreadCount });
@@ -241,8 +243,8 @@ export const useStore = create<AppState>()(
                 try {
                     // Fetch products and categories in parallel
                     const [prodRes, catRes] = await Promise.all([
-                        fetch('http://localhost:5000/api/products'),
-                        fetch('http://localhost:5000/api/categories')
+                        fetch(`${API_BASE}/products`),
+                        fetch(`${API_BASE}/categories`)
                     ]);
 
                     const products = await prodRes.json();

@@ -26,7 +26,8 @@ const KitchenDisplay = () => {
     useEffect(() => {
         fetchOrders();
         
-        const socket = io('http://localhost:5000');
+        const socketUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') : 'http://localhost:5000';
+        const socket = io(socketUrl);
         socket.on('kdsUpdate', () => {
             console.log('🔄 KDS Update Received via Socket');
             fetchOrders();

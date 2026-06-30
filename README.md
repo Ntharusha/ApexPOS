@@ -1,188 +1,204 @@
 # 🚀 ApexPOS SaaS — Enterprise Point of Sale (POS) & ERP Platform
 
-**ApexPOS** is a modern, real-time, cloud-based Point of Sale (POS) and Enterprise Resource Planning (ERP) platform. Designed as a comprehensive SaaS solution, it scales dynamically from single retail outlets to multi-branch franchises, hospitality networks, and service-based businesses.
+[![React](https://img.shields.io/badge/React-19-blue.svg?logo=react)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg?logo=nodedotjs)](https://nodejs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-5.2-lightgrey.svg?logo=express)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.0-green.svg?logo=mongodb)](https://www.mongodb.com/)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](#)
 
-Built with a focus on high performance, real-time synchronization, and a premium user experience.
+**ApexPOS** is a modern, real-time, cloud-native Software-as-a-Service (SaaS) Point of Sale (POS) and Enterprise Resource Planning (ERP) platform. Designed for high performance and reliability, it enables businesses to seamlessly scale from single retail outlets to multi-branch franchises, hospitality networks, and service-oriented enterprises.
 
 ---
 
-## 🏛️ Application Architecture Diagram
+## 🏛️ Application Architecture & Tech Stack
 
-The application leverages a React/Vite client communicating over HTTP REST APIs and real-time WebSockets to a Node/Express backend backed by MongoDB.
+The platform is designed around a decoupled **Client-Server architecture** using the MERN stack with real-time bidirectional communication.
 
 ```mermaid
 graph TD
-    Client[React SPA Frontend] -->|HTTP REST APIs| Express[Express.js Server]
-    Client -->|WebSockets: Socket.IO| Express
-    Express -->|WebSockets: Socket.IO| Client
-    Express -->|Mongoose ORM| Mongo[(MongoDB Database)]
+    %% Define Styles
+    classDef client fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff;
+    classDef server fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff;
+    classDef database fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
+    classDef security fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:#fff;
+    classDef module fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff;
+
+    %% Nodes
+    Client["💻 React SPA Client (Vite + Zustand)"]:::client
+    WebSocket["⚡ Socket.IO Client"]:::client
     
-    subgraph "Frontend Components (Zustand State)"
-        Client --> POS[POS Register]
-        Client --> Analytics[Recharts Analytics]
-        Client --> Modules[Modules: HP, Repair, Delivery]
+    subgraph ExpressApp ["Express.js Web Server"]
+        Express["🚀 Express REST API Engine"]:::server
+        Helmet["🛡️ Helmet Security Headers"]:::security
+        RateLimit["⏳ Rate Limiters"]:::security
+        Auth["🔑 JWT Authenticator"]:::security
+        SocketIO["🔌 Socket.IO Server Manager"]:::server
     end
+
+    Mongo[("🍃 MongoDB Database")]:::database
+
+    %% Business Modules
+    subgraph Modules ["Core Modules"]
+        Retail["🛒 Retail Register"]:::module
+        Rest["🍽️ Hospitality (Table / KOT)"]:::module
+        Repair["🔧 Device Repair Logs"]:::module
+        HP["💳 Installment / Hire Purchase"]:::module
+        Delivery["🚚 Live Delivery Tracker"]:::module
+        TradeIn["♻️ Trade-In Valuations"]:::module
+    end
+
+    %% Flows
+    Client -->|HTTP REST Requests| Helmet
+    Client -->|WebSocket Handshake| SocketIO
     
-    subgraph "Backend Security Layers"
-        Express --> Helmet[Helmet Header Security]
-        Express --> RateLimit[Express Rate Limiters]
-        Express --> Auth[JWT Token Validator]
-    end
+    Helmet --> RateLimit
+    RateLimit --> Auth
+    Auth --> Express
+    
+    SocketIO <-->|Bi-directional Sync| WebSocket
+    Express <-->|Mongoose ORM| Mongo
+    
+    Client -.-> Retail
+    Client -.-> Rest
+    Client -.-> Repair
+    Client -.-> HP
+    Client -.-> Delivery
+    Client -.-> TradeIn
 ```
 
 ---
 
 ## ✨ Key Platform Features
 
-* **⚡ Real-Time Synchronization**: Seamless updates across multiple registers and locations using WebSockets (Socket.IO).
-* **📊 Analytics Dashboard**: Visualize business KPIs, sales trends, and profit margins instantly with interactive graphs (Recharts).
-* **🌍 Internationalization (i18n)**: Out-of-the-box multilingual support for global localization.
-* **🔐 Role-Based Access Control**: JWT-secured sessions with Cashier Shift Management to track cash registers.
-* **🖨️ Hardware Integrations**: Native support for receipt printing and barcode scanner inputs.
+* **⚡ Real-Time Synchronized Registers**: All transactions, inventory updates, and cash drawer actions sync instantly across all branch registers using Socket.IO.
+* **📊 Live Rich Analytics**: Business intelligence dashboard utilizing customized `recharts` to track revenue, sales counts, profit margins, and peak hours.
+* **🌐 Dynamic Localization**: Full multilingual localization powered by `react-i18next` for seamless global usability.
+* **🔐 Role-Based Access Control (RBAC)**: Secure access restrictions for different roles (`super_admin`, `branch_admin`, `manager`, `cashier`, `accountant`, `Technician`) with secure JWT cookies.
+* **💸 Dual-Tax Support**: Built-in support for calculations of standard Value Added Tax (VAT) and Social Security Contribution Levy (SSCL) tailored for retail sales.
+* **🤝 Business-Specific Add-ons**: Built-in specialized interfaces for mobile repairs, installment sales ledger management, restaurant order routing, and delivery management.
 
 ---
 
-## 🛠️ Specialized Business Modules
-
-ApexPOS includes specialized industry modules out of the box:
-* **🛒 Retail Core**: Product variants, inventory counts, categories, and fast checkouts.
-* **🍽️ Hospitality**: Table layout design, kitchen routing, and dining workflows.
-* **🔧 Repairs & Services**: Customer device repair progress logs, billing, and status updates.
-* **🚚 Delivery Tracking**: Order dispatch, driver assignments, and delivery statuses.
-* **💳 Hire Purchase (HP) & Installments**: Customer installment calculations, payback tracking, and ledger entries.
-* **♻️ Trade-ins**: Evaluate customer items and trade for store credit instantly.
-
----
-
-## 💻 Technical Stack
+## 💻 Tech Stack Breakdown
 
 ### Frontend Client
-* **Framework**: React 19 + Vite
-* **Styling**: Tailwind CSS + Framer Motion (Fluid Micro-animations)
-* **State Management**: Zustand
+* **Core**: React 19, TypeScript, Vite
+* **Styling**: Framer Motion (Fluid Micro-animations & Transitions) + TailwindCSS
+* **State Management**: Zustand (Global light-weight reactive store)
 * **Routing**: React Router v7
-* **Sockets**: Socket.IO Client
-* **Visualization**: Recharts
+* **Networking**: Axios, Socket.IO Client
+* **Analytics**: Recharts
 * **Localization**: `react-i18next`
 
-### Backend Server
-* **Runtime**: Node.js + Express.js
-* **Database**: MongoDB (Mongoose ORM)
-* **Auth**: JWT (JSON Web Tokens) & bcryptjs
-* **Engine**: Socket.IO
-* **Security**: CORS, Helmet security headers, Express Rate Limiters
+### Backend API Server
+* **Runtime**: Node.js & Express.js
+* **Database**: MongoDB (utilizing Mongoose ORM models)
+* **Realtime**: Socket.IO Engine
+* **Security & Auditing**:
+  * Helmet (secure HTTP headers)
+  * express-rate-limit (DDOS mitigation)
+  * bcryptjs (secure salt-round hashing)
+  * JSON Web Tokens (session encryption)
 
 ---
 
 ## 🚀 Getting Started (Local Development)
 
 ### Prerequisites
-* Node.js (v18 or higher)
-* MongoDB (Local instance or MongoDB Atlas Cluster)
+* **Node.js** v18.x or v20.x
+* **MongoDB** v6.x running locally on port `27017`
 
-### 1. Clone the Repository
+### 1. Setup Repository
 ```bash
 git clone https://github.com/Ntharusha/ApexPOS.git
 cd ApexPOS
 ```
 
-### 2. Backend API Setup
+### 2. Configure Backend Server
 ```bash
 cd server
 npm install
 ```
-Copy `server/.env.example` to `server/.env` and edit configurations:
+Create a `.env` file inside `server/` using the following:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/apexpos
-JWT_SECRET=your_super_secret_jwt_key
+JWT_SECRET=your_super_secret_jwt_key_change_this
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:80,http://localhost:30080
 ```
-Start the backend API development server:
+Start backend development:
 ```bash
 npm run dev
 ```
 
-### 3. Frontend Client Setup
+### 3. Configure Frontend Client
 ```bash
 cd ../client
 npm install
 ```
-Copy `client/.env.example` to `client/.env`:
+Create a `.env` file inside `client/` using the following:
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
-Start the frontend client dev server:
+Start frontend development:
 ```bash
 npm run dev
 ```
-Access the client dashboard at `http://localhost:5173`.
+Open **`http://localhost:5173`** in your browser.
 
 ---
 
-## ☁️ DevOps Architecture & Production Deployment
+## 📂 Seed Scripts & Admin Credentials
 
-For cloud environments, the application is containerized and managed via standard Kubernetes configurations and continuous integration.
+To quickly populate the platform with sample data for demonstration, you can run the built-in seed scripts.
 
-### DevOps Pipeline & GitOps Flow
+### Running Seed Scripts
+From the `server/` directory:
 
+1. **Seed default admin credentials**:
+   ```bash
+   node seedAdmin.js
+   ```
+2. **Seed sample business categories and products**:
+   ```bash
+   node seedProducts.js
+   ```
+
+### Default Credentials
+* **Super Admin Login**:
+  * **Email**: `admin@apexpos.com`
+  * **Password**: `admin123`
+* **Fast Cashier Terminal Access**:
+  * **PIN**: `1234`
+
+---
+
+## 🔄 CI/CD & Deployment Pipeline
+
+This application codebase is designed for continuous deployment via a **declarative Jenkinsfile** located in the root directory.
+
+### Build and Test Pipeline Flow
 ```mermaid
 graph LR
-    Dev[Developer] -->|Push Code| GitHub[GitHub Repo]
+    classDef git fill:#f05032,stroke:#333,stroke-width:1px,color:#fff;
+    classDef pipeline fill:#14a2ba,stroke:#333,stroke-width:1px,color:#fff;
+    classDef deploy fill:#326ce5,stroke:#333,stroke-width:1px,color:#fff;
+
+    Commit[💻 Developer Push]:::git --> GitSCM[📁 GitHub Repo]:::git
+    GitSCM -->|Webhook / Polling| Jenkins[⚙️ Jenkins Runner]:::pipeline
     
-    subgraph "CI/CD (GitHub Actions)"
-        GitHub -->|Trigger CI| Actions[GitHub Actions]
-        Actions -->|Lint & Build FE| FE_Build[Docker Build Frontend]
-        Actions -->|Test & Build BE| BE_Build[Docker Build Backend]
-        FE_Build -->|Push to| GHCR[GitHub Container Registry]
-        BE_Build -->|Push to| GHCR
+    subgraph Pipeline Stages ["Jenkins CI/CD Stages"]
+        Lint[🧹 Lint & Verify]:::pipeline
+        DockerBuild[🐳 Build & Cache Images]:::pipeline
+        PushRegistry[📤 Push to Registry - Optional]:::pipeline
+        Rollout[🚀 K3s Deployment Restart]:::deploy
     end
-    
-    subgraph "Continuous Delivery (Argo CD)"
-        GHCR -->|Detect Tag| ArgoCD[Argo CD]
-        ArgoCD -->|Sync State| K3s[k3s Cluster]
-    end
+
+    Jenkins --> Lint
+    Lint --> DockerBuild
+    DockerBuild --> PushRegistry
+    PushRegistry --> Rollout
 ```
 
-### 📖 Deployment Documentation
-
-Detailed setup guides and orchestration manifests are located here:
-👉 **[Phased Kubernetes Implementation Plan](./IMPLEMENTATION_PLAN_EC2_K8S.md)** — Step-by-step cluster setup, Terraform scripts, and Argo CD configurations.  
-👉 **[Zero-Cost Deployment Reference](./ApexPOS_Deployment_Plan_Free_Tier.md)** — DNS, Let's Encrypt certificate mounting, and managed database connections.
-
----
-
-## 🔄 How to Work This System (Workflow)
-
-This system is divided into two distinct repositories to separate your application logic from your DevOps infrastructure. Here is the day-to-day workflow:
-
-### 1. Making Application Changes (Frontend/Backend)
-* **Local Development**:
-  1. Open your code in `ApexPOS` on your local machine.
-  2. Start the backend (`cd server && npm run dev`) and frontend (`cd client && npm run dev`) to test features locally.
-* **Production Deployment**:
-  1. Stage, commit, and push your changes:
-     ```bash
-     git add .
-     git commit -m "feat: add new transaction modules"
-     git push origin dev
-     ```
-  2. **CI/CD Automation**: GitHub Actions runs automatically to lint code, compile Docker containers, push the new images to GitHub Packages (`ghcr.io`), and trigger a zero-downtime rolling restart in your Kubernetes cluster.
-
-### 2. Making Infrastructure/DevOps Changes
-* If you need to modify server specs, Kubernetes configurations, or Helm charts:
-  1. Open the [devops-repo](https://github.com/Ntharusha/ApexPos_Devops) sibling directory.
-  2. Make changes to Terraform scripts, Helm templates (`values.yaml`), or Kubernetes manifests.
-  3. Push changes to GitHub:
-     ```bash
-     git add .
-     git commit -m "config: increase backend memory allocation"
-     git push origin main
-     ```
-  4. **GitOps Automation**: **Argo CD** automatically detects your changes, pulls the new manifests, and synchronizes the cluster state without you ever needing to run manual deployment commands!
-
----
-
-## 📄 License
-
-This project is proprietary and confidential. Unauthorized copying of files, via any medium, is strictly prohibited.
+Detailed Infrastructure configurations (Kubernetes files, Helm charts, Terraform configurations) can be found in the sibling repository:  
+👉 **[ApexPOS DevOps Infrastructure Repository](https://github.com/Ntharusha/ApexPos_Devops)**

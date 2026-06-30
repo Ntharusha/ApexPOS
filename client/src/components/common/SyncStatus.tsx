@@ -3,6 +3,8 @@ import { Wifi, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const SyncStatus = () => {
     const { isOnline, setOnlineStatus, pendingSales, clearPendingSales } = useStore();
     const [isSyncing, setIsSyncing] = useState(false);
@@ -30,7 +32,7 @@ const SyncStatus = () => {
 
         for (const sale of pendingSales) {
             try {
-                const res = await fetch('http://localhost:5000/api/sales', {
+                const res = await fetch(`${API_BASE}/sales`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(sale),

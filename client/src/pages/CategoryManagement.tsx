@@ -3,13 +3,15 @@ import { Plus, Trash, Tags } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const CategoryManagement = () => {
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const theme = useStore(state => state.theme);
 
     const fetchCategories = () => {
-        fetch('http://localhost:5000/api/categories')
+        fetch(`${API_BASE}/categories`)
             .then(res => res.json())
             .then(data => {
                 setCategories(data);
@@ -29,7 +31,7 @@ const CategoryManagement = () => {
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure?')) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/categories/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/categories/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 fetchCategories();
             } else {
@@ -46,7 +48,7 @@ const CategoryManagement = () => {
         if (!name) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/categories', {
+            const res = await fetch(`${API_BASE}/categories`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, icon: 'Tag', description: '' })

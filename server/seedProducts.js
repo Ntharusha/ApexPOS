@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Category } = require('./models/AllModels');
 const Product = require('./models/Product');
 
-const mongoURI = 'mongodb://localhost:27017/apexpos';
+const mongoURI = 'mongodb://apexpos-database:27017/apexpos';
 
 const seedCategories = [
     // Grocery
@@ -12,14 +12,14 @@ const seedCategories = [
     { name: 'Dairy', business_type: 'grocery', icon: '🥛' },
     { name: 'Bakery', business_type: 'grocery', icon: '🍞' },
     { name: 'Meat & Seafood', business_type: 'grocery', icon: '🥩' },
-    
+
     // Mobile
     { name: 'Smartphones', business_type: 'mobile', icon: '📱' },
     { name: 'Tablets', business_type: 'mobile', icon: '平板' },
     { name: 'Accessories', business_type: 'mobile', icon: '🎧' },
     { name: 'Wearables', business_type: 'mobile', icon: '⌚' },
     { name: 'Repairs', business_type: 'mobile', icon: '🔧' },
-    
+
     // Restaurant
     { name: 'Main Course', business_type: 'restaurant', icon: '🍽️' },
     { name: 'Fast Food', business_type: 'restaurant', icon: '🍔' },
@@ -39,7 +39,7 @@ const seedProducts = [
     { name: 'Coca Cola (1.5L)', category: 'Beverages', price: 380, stock: 120, business_type: 'grocery' },
     { name: 'Bananas (1kg)', category: 'Fruits', price: 280, stock: 150, business_type: 'grocery' },
     { name: 'Brown Eggs (10pk)', category: 'Dairy', price: 420, stock: 60, business_type: 'grocery' },
-    
+
     // --- Mobile Shop ---
     { name: 'iPhone 15 Pro 256GB', category: 'Smartphones', price: 425000, stock: 5, business_type: 'mobile' },
     { name: 'Samsung Galaxy S24 Ultra', category: 'Smartphones', price: 395000, stock: 8, business_type: 'mobile' },
@@ -65,7 +65,7 @@ async function seed() {
     try {
         await mongoose.connect(mongoURI);
         console.log('Connected to MongoDB for seeding...');
-        
+
         await Category.deleteMany({});
         await Category.insertMany(seedCategories);
         console.log('Categories seeded!');
@@ -73,7 +73,7 @@ async function seed() {
         await Product.deleteMany({});
         await Product.insertMany(seedProducts);
         console.log('Products seeded!');
-        
+
         process.exit();
     } catch (err) {
         console.error('Seeding error:', err);
