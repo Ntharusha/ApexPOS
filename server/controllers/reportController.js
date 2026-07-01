@@ -4,7 +4,12 @@ const Product = require('../models/Product');
 // existing ones kept for compatibility
 exports.getProfitLoss = async (req, res) => {
     try {
-        const sales = await Sale.find();
+        const mode = req.query.mode || 'grocery';
+        const saleQuery = mode === 'grocery' 
+            ? { $or: [{ business_type: 'grocery' }, { business_type: { $exists: false } }] }
+            : { business_type: mode };
+
+        const sales = await Sale.find(saleQuery);
         const expenses = await Expense.find();
         const totalSales = sales.reduce((acc, curr) => acc + (curr.grandTotal || 0), 0);
         const totalExpenses = expenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
@@ -17,9 +22,19 @@ exports.getProfitLoss = async (req, res) => {
 
 exports.getDailyClosing = async (req, res) => {
     try {
+        const mode = req.query.mode || 'grocery';
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const sales = await Sale.find({ date: { $gte: today } });
+
+        const saleQuery = {
+            date: { $gte: today },
+            ...(mode === 'grocery'
+                ? { $or: [{ business_type: 'grocery' }, { business_type: { $exists: false } }] }
+                : { business_type: mode }
+            )
+        };
+
+        const sales = await Sale.find(saleQuery);
         const expenses = await Expense.find({ date: { $gte: today } });
         const totalSales = sales.reduce((acc, curr) => acc + (curr.grandTotal || 0), 0);
         const totalExpenses = expenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
@@ -31,7 +46,8 @@ exports.getDailyClosing = async (req, res) => {
 
 exports.getLowStock = async (req, res) => {
     try {
-        const products = await Product.find({ $expr: { $lte: ["$stock", "$minStock"] } });
+        const mode = req.query.mode || 'grocery';
+        const products = await Product.find({ $expr: { $lte: ["$stock", "$minStock"] }, business_type: mode });
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -42,7 +58,12 @@ exports.getLowStock = async (req, res) => {
 
 exports.getSalesReports = async (req, res) => {
     try {
-        const sales = await Sale.find().sort({ date: -1 }).limit(100);
+        const mode = req.query.mode || 'grocery';
+        const saleQuery = mode === 'grocery' 
+            ? { $or: [{ business_type: 'grocery' }, { business_type: { $exists: false } }] }
+            : { business_type: mode };
+
+        const sales = await Sale.find(saleQuery).sort({ date: -1 }).limit(100);
         res.json(sales);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -51,7 +72,8 @@ exports.getSalesReports = async (req, res) => {
 
 exports.getStockReports = async (req, res) => {
     try {
-        const products = await Product.find().select('name stock price category minStock');
+        const mode = req.query.mode || 'grocery';
+        const products = await Product.find({ business_type: mode }).select('name stock price category minStock');
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -88,7 +110,7 @@ exports.getRepairProfitReports = async (req, res) => {
 
 exports.getTaxSummary = async (req, res) => {
     try {
-        const { year, quarter } = req.query;
+        const { year, quarter, mode = 'grocery' } = req.query;
         // Default to current quarter if not specified
         const now = new Date();
         const targetYear = parseInt(year) || now.getFullYear();
@@ -98,7 +120,15 @@ exports.getTaxSummary = async (req, res) => {
         const startDate = new Date(targetYear, startMonth, 1);
         const endDate = new Date(targetYear, startMonth + 3, 0, 23, 59, 59);
 
-        const sales = await Sale.find({ date: { $gte: startDate, $lte: endDate } });
+        const saleQuery = {
+            date: { $gte: startDate, $lte: endDate },
+            ...(mode === 'grocery'
+                ? { $or: [{ business_type: 'grocery' }, { business_type: { $exists: false } }] }
+                : { business_type: mode }
+            )
+        };
+
+        const sales = await Sale.find(saleQuery);
 
         const summary = {
             quarter: targetQuarter,
@@ -123,7 +153,12 @@ exports.getTaxSummary = async (req, res) => {
 
 exports.getProductPerformance = async (req, res) => {
     try {
-        const sales = await Sale.find();
+        const mode = req.query.mode || 'grocery';
+        const saleQuery = mode === 'grocery' 
+            ? { $or: [{ business_type: 'grocery' }, { business_type: { $exists: false } }] }
+            : { business_type: mode };
+
+        const sales = await Sale.find(saleQuery);
         const performance = {};
 
         sales.forEach(sale => {
@@ -146,13 +181,36 @@ exports.getProductPerformance = async (req, res) => {
 
 exports.getGenericReport = async (req, res) => {
     const { type } = req.params;
+    const mode = req.query.mode || 'grocery';
     try {
+        const saleQuery = mode === 'grocery' 
+            ? { $or: [{ business_type: 'grocery' }, { business_type: { $exists: false } }] }
+            : { business_type: mode };
+
         switch (type) {
             case 'stock-movement':
-                const movements = await StockMovement.find().sort({ createdAt: -1 }).limit(100);
+                const movements = await StockMovement.aggregate([
+                    { $sort: { createdAt: -1 } },
+                    { $limit: 200 },
+                    {
+                        $lookup: {
+                            from: 'products',
+                            localField: 'productId',
+                            foreignField: '_id',
+                            as: 'productInfo'
+                        }
+                    },
+                    { $unwind: { path: '$productInfo', preserveNullAndEmptyArrays: true } },
+                    {
+                        $match: {
+                            'productInfo.business_type': mode
+                        }
+                    },
+                    { $limit: 100 }
+                ]);
                 return res.json(movements);
             case 'hp-collection':
-
+                if (mode !== 'mobile') return res.json([]);
                 const hpAccounts = await HirePurchase.find();
                 const collections = [];
                 hpAccounts.forEach(account => {
@@ -176,13 +234,13 @@ exports.getGenericReport = async (req, res) => {
             case 'returns':
                 return res.json([]);
             case 'sales-person':
-                return res.json(await Sale.find().sort({ date: -1 }).limit(50));
+                return res.json(await Sale.find(saleQuery).sort({ date: -1 }).limit(50));
             case 'sales-type':
-                return res.json(await Sale.find().sort({ date: -1 }).limit(50));
+                return res.json(await Sale.find(saleQuery).sort({ date: -1 }).limit(50));
             case 'sales-credit':
-                return res.json(await Sale.find({ paymentStatus: 'Partial' }).sort({ date: -1 }));
+                return res.json(await Sale.find({ ...saleQuery, paymentStatus: 'Partial' }).sort({ date: -1 }));
             case 'cus-credit':
-                return res.json(await Sale.find({ paymentStatus: 'Unpaid' }).sort({ date: -1 }));
+                return res.json(await Sale.find({ ...saleQuery, paymentStatus: 'Unpaid' }).sort({ date: -1 }));
             default:
                 return res.status(404).json({ message: 'Report type not found' });
         }

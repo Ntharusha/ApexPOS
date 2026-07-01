@@ -116,6 +116,7 @@ const reportCategories: ReportCategory[] = [
 
 const Reports = () => {
     const theme = useStore(state => state.theme);
+    const posMode = useStore(state => state.posMode) || 'grocery';
     const [selectedReport, setSelectedReport] = useState<ReportCategory | null>(null);
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
@@ -154,7 +155,14 @@ const Reports = () => {
         setLoading(true);
         setSelectedReport(category);
         try {
-            const response = await fetch(`http://localhost:5000${category.endpoint}`);
+            const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const cleanEndpoint = category.endpoint.startsWith('/api') 
+                ? category.endpoint.substring(4) 
+                : category.endpoint;
+            
+            const separator = cleanEndpoint.includes('?') ? '&' : '?';
+            const url = `${apiBase}${cleanEndpoint}${separator}mode=${posMode}`;
+            const response = await fetch(url);
             const data = await response.json();
             setReportData(data);
         } catch (error) {

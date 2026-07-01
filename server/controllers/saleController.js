@@ -7,7 +7,7 @@ const { calculateSaleTax } = require('../utils/taxEngine');
 exports.createSale = async (req, res) => {
     try {
         console.log("Processing Sale:", req.body);
-        const { items, discount = 0, payments = [], cashierName = 'Unknown', branchId = 'HQ', customerId = null, loyaltyDiscount = 0 } = req.body;
+        const { items, discount = 0, payments = [], cashierName = 'Unknown', branchId = 'HQ', customerId = null, loyaltyDiscount = 0, business_type = 'grocery' } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items provided" });
@@ -62,7 +62,8 @@ exports.createSale = async (req, res) => {
             branchId,
             customerId,
             loyaltyDiscount,
-            date: new Date()
+            date: new Date(),
+            business_type
         });
 
 
@@ -160,7 +161,15 @@ exports.createSale = async (req, res) => {
 // Get All Sales (History)
 exports.getSales = async (req, res) => {
     try {
-        const sales = await Sale.find().sort({ date: -1 });
+        const query = {};
+        if (req.query.mode) {
+            if (req.query.mode === 'grocery') {
+                query.$or = [{ business_type: 'grocery' }, { business_type: { $exists: false } }];
+            } else {
+                query.business_type = req.query.mode;
+            }
+        }
+        const sales = await Sale.find(query).sort({ date: -1 });
         res.json(sales);
     } catch (error) {
         res.status(500).json({ message: error.message });

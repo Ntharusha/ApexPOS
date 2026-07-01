@@ -4,6 +4,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { DollarSign, Activity, ArrowUpRight, ShoppingBag, CheckSquare, Package, Truck } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const Dashboard = () => {
     const [stats, setStats] = useState({
         dailySales: 0,
@@ -22,23 +24,26 @@ const Dashboard = () => {
     const [salesTrend, setSalesTrend] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const theme = useStore(state => state.theme);
-
-    const fetchStats = () => {
-        fetch('http://localhost:5000/api/dashboard/stats')
-            .then(res => res.json())
-            .then(data => { setStats(data); setLoading(false); })
-            .catch(() => setLoading(false));
-    };
+    const posMode = useStore(state => state.posMode) || 'grocery';
 
     useEffect(() => {
+        setLoading(true);
+        const fetchStats = () => {
+            fetch(`${API_BASE}/dashboard/stats?business_type=${posMode}`)
+                .then(res => res.json())
+                .then(data => { setStats(data); setLoading(false); })
+                .catch(() => setLoading(false));
+        };
+
         fetchStats();
-        fetch('http://localhost:5000/api/dashboard/sales-trend').then(res => res.json()).then(setSalesTrend);
-        fetch('http://localhost:5000/api/dashboard/recent-activity').then(res => res.json()).then(setRecentActivity);
+        fetch(`${API_BASE}/dashboard/sales-trend?business_type=${posMode}`).then(res => res.json()).then(setSalesTrend);
+        fetch(`${API_BASE}/dashboard/recent-activity?business_type=${posMode}`).then(res => res.json()).then(setRecentActivity);
+        
         const socketUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') : 'http://localhost:5000';
         const socket = io(socketUrl);
         socket.on('dashboardUpdate', fetchStats);
         return () => { socket.disconnect(); };
-    }, []);
+    }, [posMode]);
 
     if (loading) return <div className="p-10 text-center text-text-muted italic">Initializing Analytics...</div>;
 

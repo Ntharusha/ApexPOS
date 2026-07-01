@@ -10,20 +10,27 @@ interface Sale {
     items: any[];
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const SalesHistory = () => {
     const [sales, setSales] = React.useState<Sale[]>([]);
     const [loading, setLoading] = React.useState(true);
-    const { theme } = useStore();
+    const theme = useStore(state => state.theme);
+    const posMode = useStore(state => state.posMode) || 'grocery';
 
     React.useEffect(() => {
-        fetch('http://localhost:5000/api/sales')
+        setLoading(true);
+        fetch(`${API_BASE}/sales?mode=${posMode}`)
             .then(res => res.json())
             .then(data => {
                 setSales(data);
                 setLoading(false);
             })
-            .catch(err => console.error(err));
-    }, []);
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
+    }, [posMode]);
 
     return (
         <div className="space-y-6 h-full flex flex-col">

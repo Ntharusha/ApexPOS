@@ -66,7 +66,8 @@ const saleSchema = new mongoose.Schema({
     cashierName: String,
     branchId: { type: String, default: 'HQ' },
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
-    loyaltyDiscount: { type: Number, default: 0 }
+    loyaltyDiscount: { type: Number, default: 0 },
+    business_type: { type: String, enum: ['grocery', 'mobile', 'restaurant'], default: 'grocery' }
 });
 
 const deliverySchema = new mongoose.Schema({

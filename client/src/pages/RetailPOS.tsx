@@ -91,6 +91,7 @@ const RetailPOS = () => {
             items: cart.map(item => ({ productId: item._id, name: item.name, price: item.price, quantity: item.quantity, tax_category: item.tax_category || 'STANDARD' })),
             discount, payments, cashierName: user?.name || 'Cashier', branchId: user?.branch_id || 'HQ', customerId, loyaltyDiscount,
             date: new Date().toISOString(),
+            business_type: posMode,
         };
 
         try {
