@@ -79,8 +79,8 @@ pipeline {
                     sh "kubectl rollout restart deployment/apexpos-frontend -n apexpos"
                     
                     // Verify rollout status
-                    sh "kubectl rollout status deployment/apexpos-backend -n apexpos --timeout=90s"
-                    sh "kubectl rollout status deployment/apexpos-frontend -n apexpos --timeout=90s"
+                    sh "kubectl rollout status deployment/apexpos-backend -n apexpos --timeout=180s"
+                    sh "kubectl rollout status deployment/apexpos-frontend -n apexpos --timeout=180s"
                     
                     echo "✅ Deployment rolled out successfully to K3s cluster."
                 }
