@@ -200,7 +200,7 @@ Open **`http://localhost:5173`** in your browser.
 
 ---
 
-## 📂 Seed Scripts & Admin Credentials
+## 📂 Seed Scripts & Admin Credentials..
 
 ### Running Seed Scripts
 From the `server/` directory:
