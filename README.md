@@ -8,6 +8,9 @@
 
 **ApexPOS** is a modern, real-time, cloud-native Software-as-a-Service (SaaS) Point of Sale (POS) and Enterprise Resource Planning (ERP) platform. Designed for high performance, dual-tax compliance, and seamless multi-branch scalability.
 
+> [!NOTE]
+> **DevOps & Infrastructure**: Looking for the CI/CD pipeline configurations, Docker setups, Kubernetes/Helm manifests, or Terraform IaC? Check out the [ApexPOS DevOps Repository](../devops-repo).
+
 ---
 
 ## 🏛️ Application Architecture & Tech Stack
