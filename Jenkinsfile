@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    triggers {
+        githubPush()   // Fires on every git push via GitHub webhook
+    }
+
     environment {
         REGISTRY = 'ghcr.io'
         OWNER = 'ntharusha'
